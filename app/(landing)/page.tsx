@@ -17,7 +17,7 @@ export default function Page() {
         <div className="flex items-center justify-center">
           <img
             src="https://oumts6nefv.ufs.sh/f/xb97pP2S5jPKA88MmolnwCzebdg1UB72WJromvTPSKYiX9p5"
-            alt=""
+            alt="logo"
             className="size-70"
           />
         </div>

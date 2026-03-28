@@ -51,8 +51,14 @@ export function AppSidebar({
 
   const teams = [
     {
-      name: 'rello',
-      logo: <HugeiconsIcon icon={LayoutBottomIcon} strokeWidth={2} />,
+      name: 'Rello',
+      logo: (
+        <img
+          src="https://oumts6nefv.ufs.sh/f/xb97pP2S5jPK2M79GRuZ0x5VmlQT1DLPU3gJvzwdutNnY8A9"
+          className="size-4"
+          alt="logo-icon"
+        />
+      ),
       plan: 'Workspace',
     },
   ];

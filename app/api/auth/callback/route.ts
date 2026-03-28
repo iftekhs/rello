@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
             });
           },
         },
-      }
+      },
     );
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);
