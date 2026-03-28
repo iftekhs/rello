@@ -37,7 +37,10 @@ export default function Page() {
           </div>
           <div className="absolute top-14 -right-28 hidden w-fit rotate-12 gap-1 border-b border-dashed border-muted-foreground text-sm font-normal text-muted-foreground underline-offset-3 lg:flex">
             Open source
-            <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-auto w-3" />
+            <HugeiconsIcon
+              icon={CheckmarkCircle02Icon}
+              className="h-auto w-3"
+            />
           </div>
         </h1>
         <p className="mx-auto mb-10 max-w-3xl text-center font-medium text-muted-foreground md:text-xl">
@@ -47,7 +50,7 @@ export default function Page() {
         </p>
         <div className="flex flex-col items-center justify-center gap-3 pt-3 pb-12">
           <Link href={'/login'}>
-            <Button size={'lg'} className="p-5 text-base cursor-pointer">
+            <Button size={'lg'} arrow className="p-5 text-base cursor-pointer">
               Get Started
             </Button>
           </Link>
