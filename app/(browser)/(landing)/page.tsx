@@ -6,6 +6,7 @@ import {
   LockIcon,
   StarIcon,
   CheckmarkCircle02Icon,
+  ArrowRight02Icon,
 } from '@hugeicons/core-free-icons';
 
 export default function Page() {
@@ -50,8 +51,12 @@ export default function Page() {
         </p>
         <div className="flex flex-col items-center justify-center gap-3 pt-3 pb-12">
           <Link href={'/login'}>
-            <Button size={'lg'} arrow className="p-5 text-base cursor-pointer">
-              Get Started
+            <Button size={'lg'}  className="p-5 text-base cursor-pointer">
+              <span>Get Started</span>
+              <HugeiconsIcon
+                icon={ArrowRight02Icon}
+                className="transition-transform duration-300 group-hover/button:translate-x-1"
+              />
             </Button>
           </Link>
           <div className="text-sm text-muted-foreground md:text-balance">
