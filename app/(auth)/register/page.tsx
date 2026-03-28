@@ -52,7 +52,7 @@ export default function RegisterPage() {
     setLoading(false);
 
     setTimeout(() => {
-      window.location.href = '/auth/login';
+      window.location.href = '/login';
     }, 2000);
   }
 
@@ -137,7 +137,7 @@ export default function RegisterPage() {
 
         <p className="text-center text-sm text-muted-foreground">
           Already have an account?{' '}
-          <a href="/auth/login" className="text-primary hover:underline">
+          <a href="/login" className="text-primary hover:underline">
             Sign in
           </a>
         </p>

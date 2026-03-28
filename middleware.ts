@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  const callbackPath = '/auth/callback';
+  const callbackPath = '/api/auth/callback';
 
   if (request.nextUrl.pathname === callbackPath) {
     return NextResponse.next();
@@ -36,14 +36,14 @@ export async function middleware(request: NextRequest) {
 
   const isAuthenticated = !!user;
   const isAuthRoute =
-    request.nextUrl.pathname.startsWith('/auth/login') ||
-    request.nextUrl.pathname.startsWith('/auth/register') ||
-    request.nextUrl.pathname.startsWith('/auth/forgot-password') ||
-    request.nextUrl.pathname.startsWith('/auth/reset-password');
+    request.nextUrl.pathname.startsWith('/login') ||
+    request.nextUrl.pathname.startsWith('/register') ||
+    request.nextUrl.pathname.startsWith('/forgot-password') ||
+    request.nextUrl.pathname.startsWith('/reset-password');
   const isDashboardRoute = request.nextUrl.pathname.startsWith('/dashboard');
 
   if (isDashboardRoute && !isAuthenticated) {
-    return NextResponse.redirect(new URL('/auth/login', request.url));
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   if (isAuthRoute && isAuthenticated) {

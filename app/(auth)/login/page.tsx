@@ -91,14 +91,14 @@ export default function LoginPage() {
         </form>
 
         <div className="text-center text-sm">
-          <a href="/auth/forgot-password" className="text-muted-foreground hover:text-primary">
+          <a href="/forgot-password" className="text-muted-foreground hover:text-primary">
             Forgot password?
           </a>
         </div>
 
         <p className="text-center text-sm text-muted-foreground">
           Don&apos;t have an account?{' '}
-          <a href="/auth/register" className="text-primary hover:underline">
+          <a href="/register" className="text-primary hover:underline">
             Register
           </a>
         </p>

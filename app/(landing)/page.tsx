@@ -46,7 +46,7 @@ export default function Page() {
           powerful task management.
         </p>
         <div className="flex flex-col items-center justify-center gap-3 pt-3 pb-12">
-          <Link href={'/auth/login'}>
+          <Link href={'/login'}>
             <Button size={'lg'} className="p-5 text-base cursor-pointer">
               Get Started
             </Button>

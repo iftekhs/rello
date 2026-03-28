@@ -18,7 +18,7 @@ export default function ForgotPasswordPage() {
     const email = formData.get('email') as string;
 
     await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
+      redirectTo: `${window.location.origin}/reset-password`,
     });
 
     setSubmitted(true);
@@ -70,7 +70,7 @@ export default function ForgotPasswordPage() {
 
         <p className="text-center text-sm text-muted-foreground">
           Remember your password?{' '}
-          <a href="/auth/login" className="text-primary hover:underline">
+          <a href="/login" className="text-primary hover:underline">
             Sign in
           </a>
         </p>

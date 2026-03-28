@@ -11,14 +11,14 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/auth/login');
+    redirect('/login');
   }
 
   async function signOut() {
     'use server';
     const supabase = await createClient();
     await supabase.auth.signOut();
-    redirect('/auth/login');
+    redirect('/login');
   }
 
   return (
