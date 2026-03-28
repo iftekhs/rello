@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState } from 'react';
-import supabaseBrowserClient from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
 export default function ResetPasswordPage() {
@@ -33,7 +33,8 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    const { error: updateError } = await supabaseBrowserClient.auth.updateUser({
+    const supabase = createClient();
+    const { error: updateError } = await supabase.auth.updateUser({
       password,
     });
 

@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState } from 'react';
-import supabaseBrowserClient from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
@@ -32,7 +32,8 @@ export default function RegisterPage() {
       return;
     }
 
-    const { error: signUpError } = await supabaseBrowserClient.auth.signUp({
+    const supabase = createClient();
+    const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
     });

@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState } from 'react';
-import supabaseBrowserClient from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
@@ -20,7 +20,8 @@ export default function LoginPage() {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
-    const { error: signInError } = await supabaseBrowserClient.auth.signInWithPassword({
+    const supabase = createClient();
+    const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -39,7 +40,9 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md space-y-6 rounded-lg border border-border bg-card p-8 shadow-sm">
         <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Welcome back
+          </h1>
           <p className="text-sm text-muted-foreground">
             Enter your email and password to sign in
           </p>
@@ -90,7 +93,10 @@ export default function LoginPage() {
         </form>
 
         <div className="text-center text-sm">
-          <a href="/forgot-password" className="text-muted-foreground hover:text-primary">
+          <a
+            href="/forgot-password"
+            className="text-muted-foreground hover:text-primary"
+          >
             Forgot password?
           </a>
         </div>
