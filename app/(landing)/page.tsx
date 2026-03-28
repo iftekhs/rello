@@ -1,15 +1,19 @@
 import { Button } from '@/components/ui/button';
-import { ArrowRight02Icon } from '@hugeicons/core-free-icons';
-import { HugeiconsIcon } from '@hugeicons/react';
+import Link from 'next/link';
 
 export default function Page() {
   return (
     <section className="py-32 w-full h-screen flex items-center justify-center">
       <div className="container mx-auto">
-        <div
-          className="absolute inset-0 top-0 -z-10 mx-auto w-full opacity-10"
-          //   style='background-image: url("https://deifkwefumgah.cloudfront.net/shadcnblocks/block/patterns/grid3.svg"); background-repeat: repeat; mask-image: radial-gradient(80% 100% at 50% 30%, rgb(0, 0, 0) 40%, transparent 75%);'
-        ></div>
+        <div className="absolute inset-0 top-0 -z-10 mx-auto w-full opacity-10"></div>
+
+        <div className="flex items-center justify-center">
+          <img
+            src="https://oumts6nefv.ufs.sh/f/xb97pP2S5jPKA88MmolnwCzebdg1UB72WJromvTPSKYiX9p5"
+            alt=""
+            className="size-70"
+          />
+        </div>
         <h1 className="relative mx-auto mb-8 max-w-3xl flex-wrap text-center text-4xl font-semibold md:mb-10 md:text-6xl md:leading-snug">
           <span>The Open Source Kanban Built for Real Teams</span>
           <div className="absolute -top-10 -left-20 hidden w-fit -rotate-12 gap-1 border-b border-dashed border-muted-foreground text-sm font-normal text-muted-foreground underline-offset-3 lg:flex">
@@ -93,15 +97,14 @@ export default function Page() {
           powerful task management.
         </p>
         <div className="flex flex-col items-center justify-center gap-3 pt-3 pb-12">
-          <Button size={'lg'} className="group p-5 text-base cursor-pointer">
-            <span>Get Started</span>
-            <HugeiconsIcon
-              icon={ArrowRight02Icon}
-              className="transition-transform duration-300 group-hover:translate-x-1"
-            />
-          </Button>
+          <Link href={'/auth/login'}>
+            <Button size={'lg'} arrow className="p-5 text-base cursor-pointer">
+              Get Started
+            </Button>
+          </Link>
           <div className="text-sm text-muted-foreground md:text-balance">
-            Built with - Nextjs & TypeScript
+            Built with - Nextjs | TypeScript | Redux Toolkit | Supabase |
+            Dnd-Kit
           </div>
         </div>
       </div>

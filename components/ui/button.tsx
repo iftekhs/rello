@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Slot } from 'radix-ui';
+import { ArrowRight02Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 
 import { cn } from '@/lib/utils';
 
@@ -44,10 +46,13 @@ function Button({
   variant = 'default',
   size = 'default',
   asChild = false,
+  arrow,
+  children,
   ...props
 }: React.ComponentProps<'button'> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
+    arrow?: boolean;
   }) {
   const Comp = asChild ? Slot.Root : 'button';
 
@@ -58,7 +63,15 @@ function Button({
       data-size={size}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
-    />
+    >
+      {children}
+      {arrow && (
+        <HugeiconsIcon
+          icon={ArrowRight02Icon}
+          className="transition-transform duration-300 group-hover/button:translate-x-1"
+        />
+      )}
+    </Comp>
   );
 }
 
