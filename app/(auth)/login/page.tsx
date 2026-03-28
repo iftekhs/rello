@@ -3,12 +3,11 @@
 export const dynamic = 'force-dynamic';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import supabaseBrowserClient from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const router = useRouter();
-  const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,7 +20,7 @@ export default function LoginPage() {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { error: signInError } = await supabaseBrowserClient.auth.signInWithPassword({
       email,
       password,
     });
@@ -32,7 +31,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push('/dashboard');
+    router.push('/dashboard/boards');
     router.refresh();
   }
 

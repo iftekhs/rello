@@ -3,10 +3,9 @@
 export const dynamic = 'force-dynamic';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import supabaseBrowserClient from '@/lib/supabase/client';
 
 export default function ForgotPasswordPage() {
-  const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -17,7 +16,7 @@ export default function ForgotPasswordPage() {
     const formData = new FormData(e.currentTarget);
     const email = formData.get('email') as string;
 
-    await supabase.auth.resetPasswordForEmail(email, {
+    await supabaseBrowserClient.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
 

@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { ModeToggle } from '@/components/mode-toggle';
-import { createClient } from '@/lib/supabase/server';
+import supabaseServerClient from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
 export default async function DashboardLayout({
@@ -21,10 +21,9 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await supabaseServerClient.auth.getUser();
 
   if (!user) {
     redirect('/login');
