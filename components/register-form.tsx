@@ -23,14 +23,20 @@ import {
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 
-const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(1, 'Password is required'),
-});
+const registerSchema = z
+  .object({
+    email: z.string().email('Please enter a valid email address'),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
 
-type LoginFormData = z.infer<typeof loginSchema>;
+type RegisterFormData = z.infer<typeof registerSchema>;
 
-export function LoginForm({
+export function RegisterForm({
   className,
   ...props
 }: React.ComponentProps<'div'>) {
@@ -42,24 +48,30 @@ export function LoginForm({
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
   });
 
-  async function onSubmit(data: LoginFormData) {
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+  async function onSubmit(data: RegisterFormData) {
+    const { error: signUpError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
     });
 
-    if (signInError) {
-      setError('root', {
-        message: 'Invalid email or password',
-      });
+    if (signUpError) {
+      if (signUpError.message.includes('User already registered')) {
+        setError('email', {
+          message: 'An account with this email already exists',
+        });
+      } else {
+        setError('root', {
+          message: signUpError.message,
+        });
+      }
       return;
     }
 
-    router.push('/dashboard/boards');
+    router.push('/login');
     router.refresh();
   }
 
@@ -67,8 +79,10 @@ export function LoginForm({
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome back</CardTitle>
-          <CardDescription>Login with your email account</CardDescription>
+          <CardTitle className="text-xl">Create an account</CardTitle>
+          <CardDescription>
+            Enter your email and password to register
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)}>
@@ -88,23 +102,32 @@ export function LoginForm({
                 )}
               </Field>
               <Field>
-                <div className="flex items-center">
-                  <FieldLabel htmlFor="password">Password</FieldLabel>
-                  <Link
-                    href="/forgot-password"
-                    className="ml-auto text-xs underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </Link>
-                </div>
+                <FieldLabel htmlFor="password">Password</FieldLabel>
                 <Input
                   id="password"
                   type="password"
+                  placeholder="Min 8 characters"
                   {...register('password')}
                 />
                 {errors.password && (
                   <FieldDescription className="text-destructive">
                     {errors.password.message}
+                  </FieldDescription>
+                )}
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="confirmPassword">
+                  Confirm Password
+                </FieldLabel>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Confirm your password"
+                  {...register('confirmPassword')}
+                />
+                {errors.confirmPassword && (
+                  <FieldDescription className="text-destructive">
+                    {errors.confirmPassword.message}
                   </FieldDescription>
                 )}
               </Field>
@@ -119,15 +142,12 @@ export function LoginForm({
                   type="submit"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'Signing in...' : 'Login'}
+                  {isSubmitting ? 'Creating account...' : 'Register'}
                 </Button>
                 <FieldDescription className="text-center">
-                  Don&apos;t have an account?{' '}
-                  <Link
-                    href="/register"
-                    className="text-primary hover:underline"
-                  >
-                    Sign up
+                  Already have an account?{' '}
+                  <Link href="/login" className="text-primary hover:underline">
+                    Sign in
                   </Link>
                 </FieldDescription>
               </Field>
