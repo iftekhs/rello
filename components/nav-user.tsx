@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/sidebar"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { UnfoldMoreIcon, LogoutIcon } from "@hugeicons/core-free-icons"
-import { signOut } from "@/lib/actions"
 
 export function NavUser({
   user,
@@ -31,6 +30,11 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+
+  async function handleSignOut() {
+    await fetch('/api/auth/signout', { method: 'POST' })
+    window.location.href = '/login'
+  }
 
   return (
     <SidebarMenu>
@@ -59,7 +63,7 @@ export function NavUser({
             sideOffset={4}
           >
             <DropdownMenuItem asChild>
-              <button onClick={() => signOut()} className="flex w-full items-center gap-2">
+              <button onClick={handleSignOut} className="flex w-full items-center gap-2">
                 <HugeiconsIcon icon={LogoutIcon} strokeWidth={2} />
                 Log out
               </button>
