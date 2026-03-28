@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
-import { TeamSwitcher } from '@/components/team-switcher';
 import {
   Sidebar,
   SidebarContent,
@@ -14,17 +13,14 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar';
 import { HugeiconsIcon } from '@hugeicons/react';
-import {
-  LayoutBottomIcon,
-  UserMultipleIcon,
-  KanbanIcon,
-} from '@hugeicons/core-free-icons';
+import { UserMultipleIcon, KanbanIcon } from '@hugeicons/core-free-icons';
+import { Workspace } from '@/components/workspace';
 
 export function AppSidebar({
   user,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
-  user?: {
+  user: {
     name: string;
     email: string;
     avatar: string;
@@ -49,36 +45,16 @@ export function AppSidebar({
     },
   ];
 
-  const teams = [
-    {
-      name: 'Rello',
-      logo: (
-        <img
-          src="https://oumts6nefv.ufs.sh/f/xb97pP2S5jPK2M79GRuZ0x5VmlQT1DLPU3gJvzwdutNnY8A9"
-          className="size-4"
-          alt="logo-icon"
-        />
-      ),
-      plan: 'Workspace',
-    },
-  ];
-
-  const defaultUser = {
-    name: 'shadcn',
-    email: 'm@example.com',
-    avatar: '/avatars/shadcn.jpg',
-  };
-
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={teams} />
+        <Workspace />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={user || defaultUser} />
+        <NavUser user={user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
