@@ -15,6 +15,7 @@ import { ThemeProvider } from '@/components/providers/theme-provider';
 import { ModeToggle } from '@/components/mode-toggle';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { Toaster } from '@/components/ui/sonner';
 
 export default async function DashboardLayout({
   children,
@@ -37,6 +38,7 @@ export default async function DashboardLayout({
       enableSystem
       disableTransitionOnChange
     >
+      <Toaster />
       <SidebarProvider>
         <AppSidebar
           user={{
