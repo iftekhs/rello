@@ -130,9 +130,12 @@ function BoardCard({
   }
 
   return (
-    <Card className="relative cursor-pointer transition-colors hover:bg-muted/50">
+    <Card className="relative transition-colors">
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-        <div className="flex items-center gap-2">
+        <Link
+          href={`/dashboard/boards/${board.id}`}
+          className="flex flex-1 items-center gap-2"
+        >
           <CardTitle className="text-base font-medium">{board.title}</CardTitle>
           {visibility === 'public_readonly' && (
             <Badge variant="secondary">Public</Badge>
@@ -140,33 +143,24 @@ function BoardCard({
           {visibility === 'public_readwrite' && (
             <Badge variant="default">Public · Editable</Badge>
           )}
-        </div>
+        </Link>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="icon-sm"
               className="absolute right-2 top-2"
-              onClick={(e) => e.stopPropagation()}
             >
               <HugeiconsIcon icon={MoreVerticalIcon} />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(board);
-              }}
-            >
+            <DropdownMenuItem onClick={() => onEdit(board)}>
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(board);
-              }}
+              onClick={() => onDelete(board)}
             >
               Delete
             </DropdownMenuItem>
@@ -174,15 +168,14 @@ function BoardCard({
         </DropdownMenu>
       </CardHeader>
       <CardContent>
-        <p className="text-xs text-muted-foreground">
-          Created {formatDate(board.created_at)}
-        </p>
+        <Link href={`/dashboard/boards/${board.id}`}>
+          <p className="text-xs text-muted-foreground">
+            Created {formatDate(board.created_at)}
+          </p>
+        </Link>
       </CardContent>
       <Separator />
-      <div
-        className={`p-4 space-y-3 ${isPending ? 'opacity-50' : ''}`}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className={`p-4 space-y-3 ${isPending ? 'opacity-50' : ''}`}>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium">Public</p>
@@ -361,13 +354,12 @@ export function BoardClient({ initialBoards }: BoardClientProps) {
       ) : (
         <div className="grid auto-rows-min gap-4 md:grid-cols-3 lg:grid-cols-4">
           {initialBoards.map((board) => (
-            <Link key={board.id} href={`/dashboard/boards/${board.id}`}>
-              <BoardCard
-                board={board}
-                onEdit={openEditDialog}
-                onDelete={openDeleteDialog}
-              />
-            </Link>
+            <BoardCard
+              key={board.id}
+              board={board}
+              onEdit={openEditDialog}
+              onDelete={openDeleteDialog}
+            />
           ))}
         </div>
       )}

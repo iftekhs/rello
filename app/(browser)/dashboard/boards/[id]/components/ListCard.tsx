@@ -80,7 +80,9 @@ export function ListCard({ listId, isActive }: ListCardProps) {
   };
 
   return (
-    <Card className={`w-72 max-h-full shrink-0 overflow-hidden px-1 py-2 gap-0 ${isActive ? 'ring-2 ring-blue-500' : ''}`}>
+    <Card
+      className={`w-72 max-h-full shrink-0 overflow-hidden px-1 py-2 gap-0 ${isActive ? 'ring-2 ring-warm-red' : ''}`}
+    >
       <div className="flex items-center justify-between px-4">
         {isEditing ? (
           <Input
