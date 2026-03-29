@@ -158,7 +158,7 @@ function DragDropBoardInner() {
 
         startTransition(async () => {
           try {
-            await moveTaskToList(activeTaskId, overListId, toIndex, [])
+            await moveTaskToList(activeTaskId, overListId, toIndex, [], activeListId)
           } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Failed to save changes')
           }

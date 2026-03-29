@@ -266,29 +266,93 @@ export async function moveTaskToList(
   taskId: string,
   newListId: string,
   newPosition: number,
-  siblingUpdates: { id: string; position: number }[]
+  siblingUpdates: { id: string; position: number }[],
+  fromListId: string
 ): Promise<void> {
   await verifyTaskOwnership(taskId)
 
   const supabase = await createClient()
 
-  const updates = [
-    supabase
-      .from('tasks')
-      .update({ list_id: newListId, position: newPosition })
-      .eq('id', taskId),
-    ...siblingUpdates.map((item) =>
-      supabase
+  const { data: taskData, error: taskError } = await supabase
+    .from('tasks')
+    .select('id, list_id, position')
+    .eq('id', taskId)
+    .single()
+
+  if (taskError || !taskData) {
+    throw new Error('Task not found')
+  }
+
+  const currentListId = taskData.list_id
+
+  const { data: tasksInSourceList } = await supabase
+    .from('tasks')
+    .select('id, position')
+    .eq('list_id', currentListId)
+    .order('position', { ascending: true })
+
+  const { data: tasksInTargetList } = await supabase
+    .from('tasks')
+    .select('id, position')
+    .eq('list_id', newListId)
+    .order('position', { ascending: true })
+
+  if (!tasksInSourceList || !tasksInTargetList) {
+    throw new Error('Failed to fetch tasks')
+  }
+
+  const filteredSource = tasksInSourceList.filter((t) => t.id !== taskId)
+
+  let insertPosition = newPosition
+  if (insertPosition < 0) {
+    insertPosition = tasksInTargetList.length
+  } else if (insertPosition > tasksInTargetList.length) {
+    insertPosition = tasksInTargetList.length
+  }
+
+  const allTargetTasks = [...tasksInTargetList]
+  allTargetTasks.splice(insertPosition, 0, { id: taskId, position: insertPosition })
+
+  const sourceUpdates = filteredSource.map((t, i) => ({
+    id: t.id,
+    position: i,
+  }))
+
+  const targetUpdates = allTargetTasks.map((t, i) => ({
+    id: t.id,
+    position: i,
+  }))
+
+  const { error: moveError } = await supabase
+    .from('tasks')
+    .update({ list_id: newListId, position: insertPosition })
+    .eq('id', taskId)
+
+  if (moveError) {
+    throw new Error(`Failed to move task: ${moveError.message}`)
+  }
+
+  if (sourceUpdates.length > 0) {
+    for (const update of sourceUpdates) {
+      const { error } = await supabase
         .from('tasks')
-        .update({ position: item.position })
-        .eq('id', item.id)
-    ),
-  ]
+        .update({ position: update.position })
+        .eq('id', update.id)
+      if (error) {
+        throw new Error(`Failed to update source positions: ${error.message}`)
+      }
+    }
+  }
 
-  const results = await Promise.all(updates)
-  const error = results.find((r) => r.error)
-
-  if (error?.error) {
-    throw new Error(`Failed to move task: ${error.error.message}`)
+  if (targetUpdates.length > 0) {
+    for (const update of targetUpdates) {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ position: update.position })
+        .eq('id', update.id)
+      if (error) {
+        throw new Error(`Failed to update target positions: ${error.message}`)
+      }
+    }
   }
 }
