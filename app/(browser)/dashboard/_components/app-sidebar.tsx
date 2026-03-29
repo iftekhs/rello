@@ -3,8 +3,8 @@
 import * as React from 'react';
 import { usePathname } from 'next/navigation';
 
-import { NavMain } from '@/components/nav-main';
-import { NavUser } from '@/components/nav-user';
+import { NavMain } from './nav-main';
+import { NavUser } from './nav-user';
 import {
   Sidebar,
   SidebarContent,
@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/sidebar';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { UserMultipleIcon, KanbanIcon } from '@hugeicons/core-free-icons';
-import { Workspace } from '@/components/workspace';
+import { Workspace } from './workspace';
 
 export function AppSidebar({
   user,
