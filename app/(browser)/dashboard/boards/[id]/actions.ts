@@ -1,18 +1,10 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { getAuthenticatedUser } from '@/lib/supabase/get-user'
 import { List, Task } from '@/store/useBoardStore'
 
 async function verifyBoardAccess(boardId: string) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
+  const { supabase, user } = await getAuthenticatedUser()
 
   const { data: board, error } = await supabase
     .from('boards')
@@ -36,15 +28,7 @@ async function verifyBoardAccess(boardId: string) {
 }
 
 async function verifyListOwnership(listId: string) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
+  const { supabase, user } = await getAuthenticatedUser()
 
   const { data: list, error } = await supabase
     .from('lists')
@@ -69,15 +53,7 @@ async function verifyListOwnership(listId: string) {
 }
 
 async function verifyTaskOwnership(taskId: string) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
+  const { supabase, user } = await getAuthenticatedUser()
 
   const { data: task, error } = await supabase
     .from('tasks')
@@ -104,7 +80,7 @@ async function verifyTaskOwnership(taskId: string) {
 export async function createList(boardId: string, title: string, position: number): Promise<List> {
   await verifyBoardAccess(boardId)
 
-  const supabase = await createClient()
+  const { supabase } = await getAuthenticatedUser()
 
   const { data, error } = await supabase
     .from('lists')
@@ -126,7 +102,7 @@ export async function createList(boardId: string, title: string, position: numbe
 export async function updateListTitle(listId: string, title: string): Promise<void> {
   await verifyListOwnership(listId)
 
-  const supabase = await createClient()
+  const { supabase } = await getAuthenticatedUser()
 
   const { error } = await supabase
     .from('lists')
@@ -141,7 +117,7 @@ export async function updateListTitle(listId: string, title: string): Promise<vo
 export async function deleteList(listId: string): Promise<void> {
   await verifyListOwnership(listId)
 
-  const supabase = await createClient()
+  const { supabase } = await getAuthenticatedUser()
 
   const { error } = await supabase
     .from('lists')
@@ -162,7 +138,7 @@ export async function createTask(
 ): Promise<Task> {
   await verifyBoardAccess(boardId)
 
-  const supabase = await createClient()
+  const { supabase } = await getAuthenticatedUser()
 
   const { data, error } = await supabase
     .from('tasks')
@@ -190,7 +166,7 @@ export async function updateTask(
 ): Promise<Task> {
   await verifyTaskOwnership(taskId)
 
-  const supabase = await createClient()
+  const { supabase } = await getAuthenticatedUser()
 
   const { data, error } = await supabase
     .from('tasks')
@@ -213,7 +189,7 @@ export async function updateTask(
 export async function deleteTask(taskId: string): Promise<void> {
   await verifyTaskOwnership(taskId)
 
-  const supabase = await createClient()
+  const { supabase } = await getAuthenticatedUser()
 
   const { error } = await supabase
     .from('tasks')
@@ -228,7 +204,7 @@ export async function deleteTask(taskId: string): Promise<void> {
 export async function reorderLists(listUpdates: { id: string; position: number }[]): Promise<void> {
   if (listUpdates.length === 0) return
 
-  const supabase = await createClient()
+  const { supabase } = await getAuthenticatedUser()
 
   const { data: list, error: listError } = await supabase
     .from('lists')
@@ -260,7 +236,7 @@ export async function reorderTasksInList(
 
   await verifyListOwnership(listId)
 
-  const supabase = await createClient()
+  const { supabase } = await getAuthenticatedUser()
 
   await Promise.all(
     taskUpdates.map((item) =>
@@ -281,7 +257,7 @@ export async function moveTaskToList(
 ): Promise<void> {
   await verifyTaskOwnership(taskId)
 
-  const supabase = await createClient()
+  const { supabase } = await getAuthenticatedUser()
 
   const { data: taskData, error: taskError } = await supabase
     .from('tasks')

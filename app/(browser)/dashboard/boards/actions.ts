@@ -1,18 +1,10 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
+import { getAuthenticatedUser } from '@/lib/supabase/get-user';
 
 export async function createDefaultBoard() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error('Unauthorized');
-  }
+  const { supabase, user } = await getAuthenticatedUser();
 
   const { data: board, error: boardError } = await supabase
     .from('boards')
@@ -35,7 +27,7 @@ export async function createDefaultBoard() {
       board_id: board.id,
       title: list.title,
       position: list.position,
-    }))
+    })),
   );
 
   if (listsError) {
@@ -47,15 +39,7 @@ export async function createDefaultBoard() {
 }
 
 export async function createBoard(title: string) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error('Unauthorized');
-  }
+  const { supabase, user } = await getAuthenticatedUser();
 
   const { data: board, error: boardError } = await supabase
     .from('boards')
@@ -78,7 +62,7 @@ export async function createBoard(title: string) {
       board_id: board.id,
       title: list.title,
       position: list.position,
-    }))
+    })),
   );
 
   if (listsError) {
@@ -90,15 +74,7 @@ export async function createBoard(title: string) {
 }
 
 export async function updateBoard(boardId: string, title: string) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error('Unauthorized');
-  }
+  const { supabase, user } = await getAuthenticatedUser();
 
   const { error } = await supabase
     .from('boards')
@@ -114,15 +90,7 @@ export async function updateBoard(boardId: string, title: string) {
 }
 
 export async function deleteBoard(boardId: string) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error('Unauthorized');
-  }
+  const { supabase, user } = await getAuthenticatedUser();
 
   const { error } = await supabase
     .from('boards')
@@ -139,17 +107,9 @@ export async function deleteBoard(boardId: string) {
 
 export async function updateBoardVisibility(
   boardId: string,
-  visibility: 'private' | 'public_readonly' | 'public_readwrite'
+  visibility: 'private' | 'public_readonly' | 'public_readwrite',
 ) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error('Unauthorized');
-  }
+  const { supabase, user } = await getAuthenticatedUser();
 
   const { error } = await supabase
     .from('boards')
