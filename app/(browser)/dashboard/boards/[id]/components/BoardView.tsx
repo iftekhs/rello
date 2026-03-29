@@ -1,30 +1,29 @@
-'use client';
+'use client'
 
-import { useEffect } from 'react';
-import { useBoardStore, Board, List } from '../store/useBoardStore';
-import { ListCard } from './ListCard';
-import { AddListForm } from './AddListForm';
+import { useEffect } from 'react'
+import { useBoardStore, Board, List } from '../store/useBoardStore'
+import { DragDropBoard } from './DragDropBoard'
+import { AddListForm } from './AddListForm'
 
 interface BoardViewProps {
-  initialBoard: Board;
-  initialLists: List[];
+  initialBoard: Board
+  initialLists: List[]
 }
 
 export function BoardView({ initialBoard, initialLists }: BoardViewProps) {
-  const board = useBoardStore((s) => s.board);
-  const lists = useBoardStore((s) => s.lists);
-  const setInitialData = useBoardStore((s) => s.setInitialData);
+  const board = useBoardStore((s) => s.board)
+  const setInitialData = useBoardStore((s) => s.setInitialData)
 
   useEffect(() => {
-    setInitialData(initialBoard, initialLists);
-  }, [initialBoard, initialLists, setInitialData]);
+    setInitialData(initialBoard, initialLists)
+  }, [initialBoard, initialLists, setInitialData])
 
   if (!board) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="h-8 w-64 animate-pulse rounded bg-muted" />
       </div>
-    );
+    )
   }
 
   return (
@@ -33,13 +32,9 @@ export function BoardView({ initialBoard, initialLists }: BoardViewProps) {
         <h1 className="text-xl font-bold">{board.title}</h1>
       </header>
       <div className="flex items-start flex-row gap-3 overflow-x-auto px-4 pb-4 pt-2">
-        {[...lists]
-          .sort((a, b) => a.position - b.position)
-          .map((list) => (
-            <ListCard key={list.id} listId={list.id} />
-          ))}
+        <DragDropBoard />
         <AddListForm />
       </div>
     </div>
-  );
+  )
 }

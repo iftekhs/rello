@@ -201,3 +201,71 @@ export async function deleteTask(taskId: string): Promise<void> {
     throw new Error(`Failed to delete task: ${error.message}`)
   }
 }
+
+export async function reorderLists(listUpdates: { id: string; position: number }[]): Promise<void> {
+  if (listUpdates.length === 0) return
+
+  await verifyBoardOwnership(listUpdates[0].id)
+
+  const supabase = await createClient()
+
+  await Promise.all(
+    listUpdates.map((item) =>
+      supabase
+        .from('lists')
+        .update({ position: item.position })
+        .eq('id', item.id)
+    )
+  )
+}
+
+export async function reorderTasksInList(
+  taskUpdates: { id: string; position: number }[],
+  listId: string
+): Promise<void> {
+  if (taskUpdates.length === 0) return
+
+  await verifyListOwnership(listId)
+
+  const supabase = await createClient()
+
+  await Promise.all(
+    taskUpdates.map((item) =>
+      supabase
+        .from('tasks')
+        .update({ position: item.position })
+        .eq('id', item.id)
+    )
+  )
+}
+
+export async function moveTaskToList(
+  taskId: string,
+  newListId: string,
+  newPosition: number,
+  siblingUpdates: { id: string; position: number }[]
+): Promise<void> {
+  await verifyTaskOwnership(taskId)
+
+  const supabase = await createClient()
+
+  const updates = [
+    supabase
+      .from('tasks')
+      .update({ list_id: newListId, position: newPosition })
+      .eq('id', taskId),
+    ...siblingUpdates.map((item) =>
+      supabase
+        .from('tasks')
+        .update({ position: item.position })
+        .eq('id', item.id)
+    ),
+  ]
+
+  const results = await Promise.all(updates)
+  const error = results.find((r) => r.error)
+
+  if (error?.error) {
+    throw new Error(`Failed to move task: ${error.error.message}`)
+  }
+}

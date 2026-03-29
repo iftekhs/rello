@@ -13,9 +13,10 @@ import { TaskList } from './TaskList';
 
 interface ListCardProps {
   listId: string;
+  isActive?: boolean;
 }
 
-export function ListCard({ listId }: ListCardProps) {
+export function ListCard({ listId, isActive }: ListCardProps) {
   const list = useBoardStore((s) => s.lists.find((l) => l.id === listId));
   const boardId = useBoardStore((s) => s.board?.id);
   const updateList = useBoardStore((s) => s.updateList);
@@ -79,7 +80,7 @@ export function ListCard({ listId }: ListCardProps) {
   };
 
   return (
-    <Card className="w-72 max-h-full shrink-0 overflow-hidden px-1 py-2 gap-0">
+    <Card className={`w-72 max-h-full shrink-0 overflow-hidden px-1 py-2 gap-0 ${isActive ? 'ring-2 ring-blue-500' : ''}`}>
       <div className="flex items-center justify-between px-4">
         {isEditing ? (
           <Input

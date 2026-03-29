@@ -43,6 +43,8 @@ type BoardActions = {
   addTask: (task: Task) => void
   updateTask: (task: Task) => void
   deleteTask: (taskId: string, listId: string) => void
+  moveTask: (taskId: string, fromListId: string, toListId: string, newPosition: number) => void
+  reorderTasksInList: (listId: string, tasks: Task[]) => void
 }
 
 export const useBoardStore = create<BoardState & BoardActions>()(
@@ -105,6 +107,38 @@ export const useBoardStore = create<BoardState & BoardActions>()(
           if (list) {
             list.tasks = list.tasks.filter((t) => t.id !== taskId)
           }
+        }),
+
+      moveTask: (taskId, fromListId, toListId, newPosition) =>
+        set((state) => {
+          const fromList = state.lists.find((l) => l.id === fromListId)
+          const toList = state.lists.find((l) => l.id === toListId)
+
+          if (!fromList || !toList) return
+
+          const taskIndex = fromList.tasks.findIndex((t) => t.id === taskId)
+          if (taskIndex === -1) return
+
+          const [task] = fromList.tasks.splice(taskIndex, 1)
+          task.list_id = toListId
+          task.position = newPosition
+
+          toList.tasks.splice(newPosition, 0, task)
+
+          fromList.tasks.forEach((t, i) => {
+            t.position = i
+          })
+          toList.tasks.forEach((t, i) => {
+            t.position = i
+          })
+        }),
+
+      reorderTasksInList: (listId, tasks) =>
+        set((state) => {
+          const list = state.lists.find((l) => l.id === listId)
+          if (!list) return
+
+          list.tasks = tasks.map((t, i) => ({ ...t, position: i }))
         }),
     })),
     { name: 'BoardStore' }
