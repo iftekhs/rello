@@ -30,17 +30,10 @@ export function AppSidebar({
 
   const navMain = [
     {
-      title: 'Users',
-      url: '/dashboard/users',
-      icon: <HugeiconsIcon icon={UserMultipleIcon} strokeWidth={2} />,
-      isActive: pathname === '/dashboard/users',
-      items: [],
-    },
-    {
       title: 'Boards',
       url: '/dashboard/boards',
       icon: <HugeiconsIcon icon={KanbanIcon} strokeWidth={2} />,
-      isActive: pathname === '/dashboard/boards',
+      isActive: pathname.startsWith('/dashboard/boards'),
       items: [],
     },
   ];

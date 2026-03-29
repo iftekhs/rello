@@ -2,12 +2,6 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function proxy(request: NextRequest) {
-  const callbackPath = '/api/auth/callback';
-
-  if (request.nextUrl.pathname === callbackPath) {
-    return NextResponse.next();
-  }
-
   const supabaseResponse = NextResponse.next({
     request,
   });

@@ -82,10 +82,11 @@ export async function createBoard(title: string) {
   );
 
   if (listsError) {
-    throw new Error('Failed to create default lists');
+    console.error('Failed to create default lists:', listsError);
   }
 
   revalidatePath('/dashboard/boards');
+  return board;
 }
 
 export async function updateBoard(boardId: string, title: string) {
