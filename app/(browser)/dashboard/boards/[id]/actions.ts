@@ -1,38 +1,21 @@
 'use server'
 
 import { getAuthenticatedUser } from '@/lib/supabase/get-user'
+import { getAuthorizedBoard } from '@/lib/supabase/get-board'
 import { List, Task } from '@/store/useBoardStore'
 
-async function verifyBoardAccess(boardId: string) {
+async function verifyBoardAccess(boardId: string, requireOwner: boolean = false) {
   const { supabase, user } = await getAuthenticatedUser()
-
-  const { data: board, error } = await supabase
-    .from('boards')
-    .select('id, user_id, visibility')
-    .eq('id', boardId)
-    .single()
-
-  if (error || !board) {
-    throw new Error('Board not found')
-  }
-
-  const isOwner = board.user_id === user.id
-  const isPublicReadOnly = board.visibility === 'public_readonly'
-  const isPublicReadWrite = board.visibility === 'public_readwrite'
-
-  if (!isOwner && !isPublicReadOnly && !isPublicReadWrite) {
-    throw new Error('Unauthorized')
-  }
-
-  return { userId: user.id, isOwner, isPublicReadOnly, isPublicReadWrite }
+  const board = await getAuthorizedBoard(supabase, boardId, user.id, requireOwner)
+  return { supabase, userId: user.id, isOwner: board.user_id === user.id }
 }
 
-async function verifyListOwnership(listId: string) {
+async function verifyListOwnership(listId: string, requireOwner: boolean = false) {
   const { supabase, user } = await getAuthenticatedUser()
 
   const { data: list, error } = await supabase
     .from('lists')
-    .select('id, boards!inner(user_id, visibility)')
+    .select('board_id')
     .eq('id', listId)
     .single()
 
@@ -40,24 +23,16 @@ async function verifyListOwnership(listId: string) {
     throw new Error('List not found')
   }
 
-  const board = list.boards as unknown as { user_id: string; visibility: string }
-  const isOwner = board.user_id === user.id
-  const isPublicReadOnly = board.visibility === 'public_readonly'
-  const isPublicReadWrite = board.visibility === 'public_readwrite'
-
-  if (!isOwner && !isPublicReadOnly && !isPublicReadWrite) {
-    throw new Error('Unauthorized')
-  }
-
-  return user.id
+  const board = await getAuthorizedBoard(supabase, list.board_id, user.id, requireOwner)
+  return { supabase, userId: user.id, isOwner: board.user_id === user.id }
 }
 
-async function verifyTaskOwnership(taskId: string) {
+async function verifyTaskOwnership(taskId: string, requireOwner: boolean = false) {
   const { supabase, user } = await getAuthenticatedUser()
 
   const { data: task, error } = await supabase
     .from('tasks')
-    .select('id, boards!inner(user_id, visibility)')
+    .select('board_id')
     .eq('id', taskId)
     .single()
 
@@ -65,22 +40,12 @@ async function verifyTaskOwnership(taskId: string) {
     throw new Error('Task not found')
   }
 
-  const board = task.boards as unknown as { user_id: string; visibility: string }
-  const isOwner = board.user_id === user.id
-  const isPublicReadOnly = board.visibility === 'public_readonly'
-  const isPublicReadWrite = board.visibility === 'public_readwrite'
-
-  if (!isOwner && !isPublicReadOnly && !isPublicReadWrite) {
-    throw new Error('Unauthorized')
-  }
-
-  return user.id
+  const board = await getAuthorizedBoard(supabase, task.board_id, user.id, requireOwner)
+  return { supabase, userId: user.id, isOwner: board.user_id === user.id }
 }
 
 export async function createList(boardId: string, title: string, position: number): Promise<List> {
-  await verifyBoardAccess(boardId)
-
-  const { supabase } = await getAuthenticatedUser()
+  const { supabase } = await verifyBoardAccess(boardId)
 
   const { data, error } = await supabase
     .from('lists')
@@ -100,9 +65,7 @@ export async function createList(boardId: string, title: string, position: numbe
 }
 
 export async function updateListTitle(listId: string, title: string): Promise<void> {
-  await verifyListOwnership(listId)
-
-  const { supabase } = await getAuthenticatedUser()
+  const { supabase } = await verifyListOwnership(listId)
 
   const { error } = await supabase
     .from('lists')
@@ -115,9 +78,7 @@ export async function updateListTitle(listId: string, title: string): Promise<vo
 }
 
 export async function deleteList(listId: string): Promise<void> {
-  await verifyListOwnership(listId)
-
-  const { supabase } = await getAuthenticatedUser()
+  const { supabase } = await verifyListOwnership(listId, true)
 
   const { error } = await supabase
     .from('lists')
@@ -136,9 +97,7 @@ export async function createTask(
   description: string | null,
   position: number
 ): Promise<Task> {
-  await verifyBoardAccess(boardId)
-
-  const { supabase } = await getAuthenticatedUser()
+  const { supabase } = await verifyBoardAccess(boardId)
 
   const { data, error } = await supabase
     .from('tasks')
@@ -164,9 +123,7 @@ export async function updateTask(
   title: string,
   description: string | null
 ): Promise<Task> {
-  await verifyTaskOwnership(taskId)
-
-  const { supabase } = await getAuthenticatedUser()
+  const { supabase } = await verifyTaskOwnership(taskId)
 
   const { data, error } = await supabase
     .from('tasks')
@@ -187,9 +144,7 @@ export async function updateTask(
 }
 
 export async function deleteTask(taskId: string): Promise<void> {
-  await verifyTaskOwnership(taskId)
-
-  const { supabase } = await getAuthenticatedUser()
+  const { supabase } = await verifyTaskOwnership(taskId, true)
 
   const { error } = await supabase
     .from('tasks')
@@ -204,9 +159,9 @@ export async function deleteTask(taskId: string): Promise<void> {
 export async function reorderLists(listUpdates: { id: string; position: number }[]): Promise<void> {
   if (listUpdates.length === 0) return
 
-  const { supabase } = await getAuthenticatedUser()
+  const { supabase: supabaseAuth } = await getAuthenticatedUser()
 
-  const { data: list, error: listError } = await supabase
+  const { data: list, error: listError } = await supabaseAuth
     .from('lists')
     .select('board_id')
     .eq('id', listUpdates[0].id)
@@ -216,7 +171,7 @@ export async function reorderLists(listUpdates: { id: string; position: number }
     throw new Error('Board not found')
   }
 
-  await verifyBoardAccess(list.board_id)
+  const { supabase } = await verifyBoardAccess(list.board_id, true)
 
   await Promise.all(
     listUpdates.map((item) =>
@@ -234,9 +189,7 @@ export async function reorderTasksInList(
 ): Promise<void> {
   if (taskUpdates.length === 0) return
 
-  await verifyListOwnership(listId)
-
-  const { supabase } = await getAuthenticatedUser()
+  const { supabase } = await verifyListOwnership(listId, true)
 
   await Promise.all(
     taskUpdates.map((item) =>
@@ -255,9 +208,7 @@ export async function moveTaskToList(
   siblingUpdates: { id: string; position: number }[],
   fromListId: string
 ): Promise<void> {
-  await verifyTaskOwnership(taskId)
-
-  const { supabase } = await getAuthenticatedUser()
+  const { supabase } = await verifyTaskOwnership(taskId, true)
 
   const { data: taskData, error: taskError } = await supabase
     .from('tasks')
