@@ -14,12 +14,32 @@ export async function createBoard(title: string) {
     throw new Error('Unauthorized');
   }
 
-  const { error } = await supabase
+  const { data: board, error: boardError } = await supabase
     .from('boards')
-    .insert({ title: title.trim(), user_id: user.id });
+    .insert({ title: title.trim(), user_id: user.id })
+    .select()
+    .single();
 
-  if (error) {
+  if (boardError || !board) {
     throw new Error('Failed to create board');
+  }
+
+  const defaultLists = [
+    { title: 'To Do', position: 0 },
+    { title: 'In Progress', position: 1 },
+    { title: 'Done', position: 2 },
+  ];
+
+  const { error: listsError } = await supabase.from('lists').insert(
+    defaultLists.map((list) => ({
+      board_id: board.id,
+      title: list.title,
+      position: list.position,
+    }))
+  );
+
+  if (listsError) {
+    throw new Error('Failed to create default lists');
   }
 
   revalidatePath('/dashboard/boards');

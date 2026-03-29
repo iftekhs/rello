@@ -1,52 +1,65 @@
-'use client';
+'use client'
 
-import { useState, useTransition } from 'react';
-import { useBoardStore } from '../store/useBoardStore';
-import { createList } from '../actions';
-import { toast } from 'sonner';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { Add01Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState, useTransition } from 'react'
+import { useBoardStore } from '../store/useBoardStore'
+import { createList } from '../actions'
+import { toast } from 'sonner'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Add01Icon, Cancel01Icon } from '@hugeicons/core-free-icons'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 export function AddListForm() {
-  const lists = useBoardStore((s) => s.lists);
-  const addList = useBoardStore((s) => s.addList);
-  const board = useBoardStore((s) => s.board);
+  const lists = useBoardStore((s) => s.lists)
+  const addList = useBoardStore((s) => s.addList)
+  const deleteList = useBoardStore((s) => s.deleteList)
+  const board = useBoardStore((s) => s.board)
 
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [title, setTitle] = useState('');
-  const [isPending, startTransition] = useTransition();
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [title, setTitle] = useState('')
+  const [isPending, startTransition] = useTransition()
 
   const handleSubmit = () => {
-    if (!title.trim() || !board) return;
+    if (!title.trim() || !board) return
+
+    const position = lists.length
+    const tempId = crypto.randomUUID()
+    const optimisticList = {
+      id: tempId,
+      title: title.trim(),
+      board_id: board.id,
+      position,
+      created_at: new Date().toISOString(),
+    }
+
+    addList(optimisticList)
+    setTitle('')
+    setIsExpanded(false)
 
     startTransition(async () => {
       try {
-        const position = lists.length;
-        const newList = await createList(board.id, title.trim(), position);
-        addList(newList);
-        setTitle('');
-        setIsExpanded(false);
-        toast.success('List created');
+        const newList = await createList(board.id, title.trim(), position)
+        deleteList(tempId)
+        addList(newList)
       } catch (error) {
+        deleteList(tempId)
         toast.error(
-          error instanceof Error ? error.message : 'Failed to create list',
-        );
+          error instanceof Error ? error.message : 'Failed to create list'
+        )
       }
-    });
-  };
+    })
+  }
 
   const handleCancel = () => {
-    setTitle('');
-    setIsExpanded(false);
-  };
+    setTitle('')
+    setIsExpanded(false)
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      handleSubmit();
+      handleSubmit()
     }
-  };
+  }
 
   if (!isExpanded) {
     return (
@@ -58,7 +71,7 @@ export function AddListForm() {
         <HugeiconsIcon icon={Add01Icon} />
         <span>Add a list</span>
       </Button>
-    );
+    )
   }
 
   return (
@@ -89,5 +102,5 @@ export function AddListForm() {
         </Button>
       </div>
     </div>
-  );
+  )
 }
