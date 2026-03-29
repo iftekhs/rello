@@ -58,7 +58,7 @@ export function useRealtimeSync(boardId: string) {
           console.log('[Realtime] LIST UPDATE:', payload.new)
           const key = `list:update:${payload.new.id}`
           const entityKey = `list:${payload.new.id}`
-          const { isPending, confirmEcho, getVersion } = usePendingOpsStore.getState()
+          const { isPending, confirmEcho, getVersion, getLocalUpdatedAt, consumeEchoSequence } = usePendingOpsStore.getState()
           
           if (isPending(key)) {
             confirmEcho(key)
@@ -66,7 +66,19 @@ export function useRealtimeSync(boardId: string) {
           }
           
           const localVersion = getVersion(entityKey)
-          if (localVersion > 0) {
+          const incomingTs = new Date(payload.new.updated_at).getTime()
+          const localUpdatedAt = getLocalUpdatedAt(entityKey)
+          
+          if (localVersion > 0 && localUpdatedAt) {
+            if (incomingTs <= localUpdatedAt) {
+              consumeEchoSequence(entityKey, incomingTs)
+              return
+            }
+            const updatedList: List = {
+              ...payload.new as List,
+              position: useBoardStore.getState().lists.find(l => l.id === payload.new.id)?.position ?? payload.new.position
+            }
+            useBoardStore.getState().updateList(updatedList)
             return
           }
           
@@ -138,7 +150,7 @@ export function useRealtimeSync(boardId: string) {
           console.log('[Realtime] TASK UPDATE:', payload.new)
           const key = `task:update:${payload.new.id}`
           const entityKey = `task:${payload.new.id}`
-          const { isPending, confirmEcho, getVersion } = usePendingOpsStore.getState()
+          const { isPending, confirmEcho, getVersion, getLocalUpdatedAt, consumeEchoSequence } = usePendingOpsStore.getState()
           
           if (isPending(key)) {
             confirmEcho(key)
@@ -146,8 +158,27 @@ export function useRealtimeSync(boardId: string) {
           }
           
           const localVersion = getVersion(entityKey)
-          if (localVersion > 0) {
-            return
+          const incomingTs = new Date(payload.new.updated_at).getTime()
+          const localUpdatedAt = getLocalUpdatedAt(entityKey)
+          
+          if (localVersion > 0 && localUpdatedAt) {
+            if (incomingTs <= localUpdatedAt) {
+              consumeEchoSequence(entityKey, incomingTs)
+              return
+            }
+            const existingTask = useBoardStore.getState().lists
+              .flatMap(l => l.tasks)
+              .find(t => t.id === payload.new.id)
+            if (existingTask) {
+              const contentOnlyTask: Task = {
+                ...existingTask,
+                title: payload.new.title,
+                description: payload.new.description,
+                updated_at: payload.new.updated_at
+              }
+              useBoardStore.getState().handleRealtimeTaskUpdate(contentOnlyTask)
+              return
+            }
           }
           
           const updatedTask: Task = payload.new as Task

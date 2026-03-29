@@ -51,20 +51,27 @@ function DragDropBoardInner() {
     [lists]
   )
 
-  const { registerOp, clearOp, confirmEcho, bumpVersion } = usePendingOpsStore()
+  const { registerOp, clearOp, confirmEcho, bumpVersion, setLocalUpdatedAt, registerEchoSequence } = usePendingOpsStore()
 
-  const debouncedReorderTasks = useMemo(
-    () =>
-      debounce(async (activeListId: string, newTasks: { id: string; position: number }[]) => {
-        try {
-          await reorderTasksInListAction(newTasks, activeListId)
-        } catch (error) {
-          confirmEcho(`task:update:${activeListId}`)
-          toast.error(error instanceof Error ? error.message : 'Failed to save changes')
-        }
-      }, 300),
-    [confirmEcho]
-  )
+  const debouncedReorderTasks = useMemo(() => {
+    const latestSeqs: Map<string, number> = new Map()
+    return debounce(async (activeListId: string, newTasks: { id: string; position: number }[], seq: number) => {
+      const storedSeq = latestSeqs.get(activeListId) ?? 0
+      if (seq < storedSeq) {
+        return
+      }
+      try {
+        await reorderTasksInListAction(newTasks, activeListId)
+        newTasks.forEach((t) => {
+          registerEchoSequence(`task:${t.id}`, seq)
+          clearOp(`task:update:${t.id}`)
+        })
+      } catch (error) {
+        newTasks.forEach((t) => confirmEcho(`task:update:${t.id}`))
+        toast.error(error instanceof Error ? error.message : 'Failed to save changes')
+      }
+    }, 300)
+  }, [confirmEcho, registerEchoSequence, clearOp])
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event
@@ -120,8 +127,11 @@ function DragDropBoardInner() {
           position: i,
         }))
 
+        const listSeqs = new Map<string, number>()
         newLists.forEach((l) => {
-          bumpVersion(`list:${l.id}`)
+          const seq = bumpVersion(`list:${l.id}`)
+          listSeqs.set(l.id, seq)
+          setLocalUpdatedAt(`list:${l.id}`, Date.now())
           registerOp(`list:update:${l.id}`)
         })
         
@@ -130,7 +140,11 @@ function DragDropBoardInner() {
         startTransition(async () => {
           try {
             await reorderListsAction(newLists.map((l) => ({ id: l.id, position: l.position })))
-            newLists.forEach((l) => clearOp(`list:update:${l.id}`))
+            newLists.forEach((l) => {
+              const seq = listSeqs.get(l.id) ?? 0
+              registerEchoSequence(`list:${l.id}`, seq)
+              clearOp(`list:update:${l.id}`)
+            })
           } catch (error) {
             newLists.forEach((l) => confirmEcho(`list:update:${l.id}`))
             reorderLists(previousLists)
@@ -158,13 +172,14 @@ function DragDropBoardInner() {
             position: i,
           }))
 
+          const seq = bumpVersion(`task:${activeTaskId}`)
+          setLocalUpdatedAt(`task:${activeTaskId}`, Date.now())
           newTasks.forEach((t) => {
-            bumpVersion(`task:${t.id}`)
             registerOp(`task:update:${t.id}`)
           })
           reorderTasksInList(activeListId, newTasks)
 
-          debouncedReorderTasks(activeListId, newTasks.map((t) => ({ id: t.id, position: t.position })))
+          debouncedReorderTasks(activeListId, newTasks.map((t) => ({ id: t.id, position: t.position })), seq)
         }
       } else {
         const toList = lists.find((l) => l.id === overListId)
@@ -174,13 +189,15 @@ function DragDropBoardInner() {
           ? toList.tasks.findIndex((t) => t.id === overId)
           : toList.tasks.length
 
-        bumpVersion(`task:${activeTaskId}`)
+        const seq = bumpVersion(`task:${activeTaskId}`)
+        setLocalUpdatedAt(`task:${activeTaskId}`, Date.now())
         registerOp(`task:update:${activeTaskId}`)
         moveTask(activeTaskId, activeListId, overListId, toIndex)
 
         startTransition(async () => {
           try {
             await moveTaskToList(activeTaskId, overListId, toIndex, [], activeListId)
+            registerEchoSequence(`task:${activeTaskId}`, seq)
             clearOp(`task:update:${activeTaskId}`)
           } catch (error) {
             confirmEcho(`task:update:${activeTaskId}`)

@@ -15,7 +15,7 @@ export function AddListForm() {
   const addList = useBoardStore((s) => s.addList)
   const deleteList = useBoardStore((s) => s.deleteList)
   const board = useBoardStore((s) => s.board)
-  const { registerOp, clearOp } = usePendingOpsStore()
+  const { registerOp, clearOp, bumpVersion, setLocalUpdatedAt, registerEchoSequence, confirmEcho } = usePendingOpsStore()
 
   const [isExpanded, setIsExpanded] = useState(false)
   const [title, setTitle] = useState('')
@@ -39,15 +39,21 @@ export function AddListForm() {
     setTitle('')
     setIsExpanded(false)
 
+    const listEntityKey = `list:${tempId}`
+    const seq = bumpVersion(listEntityKey)
+    setLocalUpdatedAt(listEntityKey, Date.now())
+    registerOp(`list:insert:${tempId}`)
+
     startTransition(async () => {
       try {
         const newList = await createList(board.id, title.trim(), position)
         deleteList(tempId)
-        registerOp(`list:insert:${newList.id}`)
         addList(newList)
-        clearOp(`list:insert:${newList.id}`)
+        registerEchoSequence(`list:${newList.id}`, seq)
+        clearOp(`list:insert:${tempId}`)
       } catch (error) {
         deleteList(tempId)
+        confirmEcho(`list:insert:${tempId}`)
         toast.error(
           error instanceof Error ? error.message : 'Failed to create list'
         )

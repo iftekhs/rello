@@ -23,7 +23,7 @@ export function ListCard({ listId, isActive, dragHandleProps }: ListCardProps) {
   const boardId = useBoardStore((s) => s.board?.id);
   const updateList = useBoardStore((s) => s.updateList);
   const deleteListFromStore = useBoardStore((s) => s.deleteList);
-  const { registerOp, clearOp, confirmEcho, bumpVersion } = usePendingOpsStore();
+  const { registerOp, clearOp, confirmEcho, bumpVersion, setLocalUpdatedAt, registerEchoSequence } = usePendingOpsStore();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(list?.title ?? '');
@@ -48,12 +48,14 @@ export function ListCard({ listId, isActive, dragHandleProps }: ListCardProps) {
     updateList({ ...list, title: newTitle });
     setIsEditing(false);
 
-    bumpVersion(`list:${listId}`);
+    const seq = bumpVersion(`list:${listId}`)
+    setLocalUpdatedAt(`list:${listId}`, Date.now())
     registerOp(`list:update:${listId}`);
 
     startTransition(async () => {
       try {
         await updateListTitle(listId, newTitle);
+        registerEchoSequence(`list:${listId}`, seq)
         clearOp(`list:update:${listId}`);
       } catch (error) {
         confirmEcho(`list:update:${listId}`);
@@ -75,12 +77,14 @@ export function ListCard({ listId, isActive, dragHandleProps }: ListCardProps) {
     const previousList = { ...list };
     deleteListFromStore(listId);
 
-    bumpVersion(`list:${listId}`);
+    const seq = bumpVersion(`list:${listId}`)
+    setLocalUpdatedAt(`list:${listId}`, Date.now())
     registerOp(`list:delete:${listId}`);
 
     startTransition(async () => {
       try {
         await deleteList(listId);
+        registerEchoSequence(`list:${listId}`, seq)
         clearOp(`list:delete:${listId}`);
       } catch (error) {
         confirmEcho(`list:delete:${listId}`);

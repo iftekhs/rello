@@ -29,7 +29,7 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
   const [description, setDescription] = useState(task.description ?? '')
   const [isPending, startTransition] = useTransition()
   const updateTaskInStore = useBoardStore((s) => s.updateTask)
-  const { registerOp, clearOp, confirmEcho, bumpVersion } = usePendingOpsStore()
+  const { registerOp, clearOp, confirmEcho, bumpVersion, setLocalUpdatedAt, registerEchoSequence } = usePendingOpsStore()
 
   const handleSave = () => {
     if (!title.trim()) return
@@ -44,12 +44,14 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
     updateTaskInStore(updatedTask)
     onClose()
 
-    bumpVersion(`task:${task.id}`)
+    const seq = bumpVersion(`task:${task.id}`)
+    setLocalUpdatedAt(`task:${task.id}`, Date.now())
     registerOp(`task:update:${task.id}`)
 
     startTransition(async () => {
       try {
         await updateTaskAction(task.id, title.trim(), description.trim() || null)
+        registerEchoSequence(`task:${task.id}`, seq)
         clearOp(`task:update:${task.id}`)
       } catch (error) {
         confirmEcho(`task:update:${task.id}`)

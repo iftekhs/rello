@@ -22,7 +22,7 @@ export function AddTaskForm({ listId, boardId }: AddTaskFormProps) {
   const tasks = useMemo(() => list?.tasks ?? [], [list]);
   const addTask = useBoardStore((s) => s.addTask);
   const deleteTask = useBoardStore((s) => s.deleteTask);
-  const { registerOp, clearOp } = usePendingOpsStore();
+  const { registerOp, clearOp, bumpVersion, setLocalUpdatedAt, registerEchoSequence, confirmEcho } = usePendingOpsStore();
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [title, setTitle] = useState('');
@@ -50,6 +50,11 @@ export function AddTaskForm({ listId, boardId }: AddTaskFormProps) {
     setDescription('');
     setIsExpanded(false);
 
+    const taskEntityKey = `task:${tempId}`
+    const seq = bumpVersion(taskEntityKey)
+    setLocalUpdatedAt(taskEntityKey, Date.now())
+    registerOp(`task:insert:${tempId}`)
+
     startTransition(async () => {
       try {
         const newTask = await createTask(
@@ -60,11 +65,12 @@ export function AddTaskForm({ listId, boardId }: AddTaskFormProps) {
           position,
         );
         deleteTask(tempId, listId);
-        registerOp(`task:insert:${newTask.id}`);
         addTask(newTask);
-        clearOp(`task:insert:${newTask.id}`);
+        registerEchoSequence(`task:${newTask.id}`, seq)
+        clearOp(`task:insert:${tempId}`);
       } catch (error) {
         deleteTask(tempId, listId);
+        confirmEcho(`task:insert:${tempId}`);
         toast.error(
           error instanceof Error ? error.message : 'Failed to create task',
         );
