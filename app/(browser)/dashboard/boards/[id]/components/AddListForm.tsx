@@ -30,6 +30,7 @@ export function AddListForm() {
       board_id: board.id,
       position,
       created_at: new Date().toISOString(),
+      tasks: [],
     }
 
     addList(optimisticList)

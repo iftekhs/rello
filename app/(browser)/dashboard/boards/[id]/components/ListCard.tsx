@@ -1,88 +1,86 @@
-'use client'
+'use client';
 
-import { useState, useTransition } from 'react'
-import { useBoardStore } from '../store/useBoardStore'
-import { updateListTitle, deleteList } from '../actions'
-import { toast } from 'sonner'
-import { HugeiconsIcon } from '@hugeicons/react'
-import {
-  Edit01Icon,
-  Delete02Icon,
-  Add01Icon,
-} from '@hugeicons/core-free-icons'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { useState, useTransition } from 'react';
+import { useBoardStore } from '../store/useBoardStore';
+import { updateListTitle, deleteList } from '../actions';
+import { toast } from 'sonner';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Edit01Icon, Delete02Icon } from '@hugeicons/core-free-icons';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { TaskList } from './TaskList';
 
 interface ListCardProps {
-  listId: string
+  listId: string;
 }
 
 export function ListCard({ listId }: ListCardProps) {
-  const list = useBoardStore((s) => s.lists.find((l) => l.id === listId))
-  const updateList = useBoardStore((s) => s.updateList)
-  const deleteListFromStore = useBoardStore((s) => s.deleteList)
+  const list = useBoardStore((s) => s.lists.find((l) => l.id === listId));
+  const boardId = useBoardStore((s) => s.board?.id);
+  const updateList = useBoardStore((s) => s.updateList);
+  const deleteListFromStore = useBoardStore((s) => s.deleteList);
 
-  const [isEditing, setIsEditing] = useState(false)
-  const [editTitle, setEditTitle] = useState(list?.title ?? '')
-  const [isPending, startTransition] = useTransition()
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(list?.title ?? '');
+  const [isPending, startTransition] = useTransition();
 
-  if (!list) return null
+  if (!list) return null;
 
   const handleStartEdit = () => {
-    setEditTitle(list.title)
-    setIsEditing(true)
-  }
+    setEditTitle(list.title);
+    setIsEditing(true);
+  };
 
   const handleSave = () => {
     if (!editTitle.trim() || editTitle === list.title) {
-      setIsEditing(false)
-      return
+      setIsEditing(false);
+      return;
     }
 
-    const previousTitle = list.title
-    const newTitle = editTitle.trim()
+    const previousTitle = list.title;
+    const newTitle = editTitle.trim();
 
-    updateList({ ...list, title: newTitle })
-    setIsEditing(false)
+    updateList({ ...list, title: newTitle });
+    setIsEditing(false);
 
     startTransition(async () => {
       try {
-        await updateListTitle(listId, newTitle)
+        await updateListTitle(listId, newTitle);
       } catch (error) {
-        updateList({ ...list, title: previousTitle })
+        updateList({ ...list, title: previousTitle });
         toast.error(
-          error instanceof Error ? error.message : 'Failed to update list'
-        )
+          error instanceof Error ? error.message : 'Failed to update list',
+        );
       }
-    })
-  }
+    });
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      handleSave()
+      handleSave();
     }
-  }
+  };
 
   const handleDelete = () => {
-    const previousList = { ...list }
-    deleteListFromStore(listId)
+    const previousList = { ...list };
+    deleteListFromStore(listId);
 
     startTransition(async () => {
       try {
-        await deleteList(listId)
+        await deleteList(listId);
       } catch (error) {
-        updateList(previousList)
+        updateList(previousList);
         toast.error(
-          error instanceof Error ? error.message : 'Failed to delete list'
-        )
+          error instanceof Error ? error.message : 'Failed to delete list',
+        );
       }
-    })
-  }
+    });
+  };
 
   return (
     <Card className="w-72 max-h-full shrink-0 overflow-hidden px-1 py-2 gap-0">
-      <div className="flex items-center justify-between px-2">
+      <div className="flex items-center justify-between px-4">
         {isEditing ? (
           <Input
             value={editTitle}
@@ -119,15 +117,9 @@ export function ListCard({ listId }: ListCardProps) {
           </Button>
         </div>
       </div>
-      <div>
-        <Button
-          variant="ghost"
-          className="flex h-auto w-full shrink-0 justify-start gap-2 p-2"
-        >
-          <HugeiconsIcon icon={Add01Icon} />
-          <span>Add a task</span>
-        </Button>
+      <div className="flex-1 overflow-y-auto px-2">
+        {boardId && <TaskList listId={listId} boardId={boardId} />}
       </div>
     </Card>
-  )
+  );
 }

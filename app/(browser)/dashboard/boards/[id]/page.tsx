@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { BoardView } from './components/BoardView';
-import { Board, List } from './store/useBoardStore';
+import { Board, List, Task } from './store/useBoardStore';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +36,7 @@ export default async function Page({ params }: PageProps) {
 
   const { data: lists, error: listsError } = await supabase
     .from('lists')
-    .select('*')
+    .select('*, tasks(*)')
     .eq('board_id', id)
     .order('position', { ascending: true });
 
@@ -44,10 +44,15 @@ export default async function Page({ params }: PageProps) {
     redirect('/dashboard/boards');
   }
 
+  const processedLists = (lists ?? []).map((list) => ({
+    ...list,
+    tasks: (list.tasks ?? []).sort((a: Task, b: Task) => a.position - b.position),
+  })) as List[];
+
   return (
     <BoardView
       initialBoard={board as Board}
-      initialLists={(lists ?? []) as List[]}
+      initialLists={processedLists}
     />
   );
 }

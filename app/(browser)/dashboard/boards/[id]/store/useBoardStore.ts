@@ -9,12 +9,24 @@ export type Board = {
   created_at: string
 }
 
+export type Task = {
+  id: string
+  title: string
+  description: string | null
+  list_id: string
+  board_id: string
+  position: number
+  created_at: string
+  updated_at: string
+}
+
 export type List = {
   id: string
   title: string
   board_id: string
   position: number
   created_at: string
+  tasks: Task[]
 }
 
 type BoardState = {
@@ -28,6 +40,9 @@ type BoardActions = {
   updateList: (list: List) => void
   deleteList: (listId: string) => void
   reorderLists: (lists: List[]) => void
+  addTask: (task: Task) => void
+  updateTask: (task: Task) => void
+  deleteTask: (taskId: string, listId: string) => void
 }
 
 export const useBoardStore = create<BoardState & BoardActions>()(
@@ -63,6 +78,33 @@ export const useBoardStore = create<BoardState & BoardActions>()(
       reorderLists: (lists) =>
         set((state) => {
           state.lists = lists
+        }),
+
+      addTask: (task) =>
+        set((state) => {
+          const list = state.lists.find((l) => l.id === task.list_id)
+          if (list) {
+            list.tasks.push(task)
+          }
+        }),
+
+      updateTask: (task) =>
+        set((state) => {
+          const list = state.lists.find((l) => l.id === task.list_id)
+          if (list) {
+            const index = list.tasks.findIndex((t) => t.id === task.id)
+            if (index !== -1) {
+              list.tasks[index] = task
+            }
+          }
+        }),
+
+      deleteTask: (taskId, listId) =>
+        set((state) => {
+          const list = state.lists.find((l) => l.id === listId)
+          if (list) {
+            list.tasks = list.tasks.filter((t) => t.id !== taskId)
+          }
         }),
     })),
     { name: 'BoardStore' }
