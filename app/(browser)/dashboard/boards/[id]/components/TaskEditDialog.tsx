@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useBoardStore, Task } from '../store/useBoardStore'
+import { usePendingOpsStore } from '../store/usePendingOpsStore'
 import { updateTask as updateTaskAction } from '../actions'
 import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -28,6 +29,7 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
   const [description, setDescription] = useState(task.description ?? '')
   const [isPending, startTransition] = useTransition()
   const updateTaskInStore = useBoardStore((s) => s.updateTask)
+  const { registerOp, clearOp } = usePendingOpsStore()
 
   const handleSave = () => {
     if (!title.trim()) return
@@ -42,6 +44,8 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
     updateTaskInStore(updatedTask)
     onClose()
 
+    registerOp(`task:update:${task.id}`)
+
     startTransition(async () => {
       try {
         await updateTaskAction(task.id, title.trim(), description.trim() || null)
@@ -50,6 +54,8 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
         toast.error(
           error instanceof Error ? error.message : 'Failed to update task'
         )
+      } finally {
+        clearOp(`task:update:${task.id}`)
       }
     })
   }

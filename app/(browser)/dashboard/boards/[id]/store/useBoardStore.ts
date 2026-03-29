@@ -45,6 +45,7 @@ type BoardActions = {
   deleteTask: (taskId: string, listId: string) => void
   moveTask: (taskId: string, fromListId: string, toListId: string, newPosition: number) => void
   reorderTasksInList: (listId: string, tasks: Task[]) => void
+  handleRealtimeTaskUpdate: (task: Task) => void
 }
 
 export const useBoardStore = create<BoardState & BoardActions>()(
@@ -68,7 +69,8 @@ export const useBoardStore = create<BoardState & BoardActions>()(
         set((state) => {
           const index = state.lists.findIndex((l) => l.id === list.id)
           if (index !== -1) {
-            state.lists[index] = list
+            state.lists[index].title = list.title
+            state.lists[index].position = list.position
           }
         }),
 
@@ -86,7 +88,11 @@ export const useBoardStore = create<BoardState & BoardActions>()(
         set((state) => {
           const list = state.lists.find((l) => l.id === task.list_id)
           if (list) {
-            list.tasks.push(task)
+            const existingIndex = list.tasks.findIndex((t) => t.id === task.id)
+            if (existingIndex === -1) {
+              const insertIndex = Math.min(task.position, list.tasks.length)
+              list.tasks.splice(insertIndex, 0, task)
+            }
           }
         }),
 
@@ -139,6 +145,52 @@ export const useBoardStore = create<BoardState & BoardActions>()(
           if (!list) return
 
           list.tasks = tasks.map((t, i) => ({ ...t, position: i }))
+        }),
+
+      handleRealtimeTaskUpdate: (task) =>
+        set((state) => {
+          const currentListId = state.lists.find((l) =>
+            l.tasks.some((t) => t.id === task.id)
+          )?.id
+
+          if (!currentListId) {
+            const list = state.lists.find((l) => l.id === task.list_id)
+            if (list) {
+              const existingIndex = list.tasks.findIndex((t) => t.id === task.id)
+              if (existingIndex === -1) {
+                list.tasks.push(task)
+                list.tasks.sort((a, b) => a.position - b.position)
+              }
+            }
+            return
+          }
+
+          if (task.list_id === currentListId) {
+            const list = state.lists.find((l) => l.id === currentListId)
+            if (list) {
+              const taskIndex = list.tasks.findIndex((t) => t.id === task.id)
+              if (taskIndex !== -1) {
+                list.tasks[taskIndex] = task
+                list.tasks.sort((a, b) => a.position - b.position)
+              }
+            }
+          } else {
+            const currentList = state.lists.find((l) => l.id === currentListId)
+            const newList = state.lists.find((l) => l.id === task.list_id)
+
+            if (currentList) {
+              currentList.tasks = currentList.tasks.filter((t) => t.id !== task.id)
+            }
+
+            if (newList) {
+              const existingIndex = newList.tasks.findIndex((t) => t.id === task.id)
+              if (existingIndex !== -1) {
+                newList.tasks.splice(existingIndex, 1)
+              }
+              const insertIndex = Math.min(task.position, newList.tasks.length)
+              newList.tasks.splice(insertIndex, 0, task)
+            }
+          }
         }),
     })),
     { name: 'BoardStore' }

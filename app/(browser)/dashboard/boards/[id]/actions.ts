@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { List, Task } from './store/useBoardStore'
 
-async function verifyBoardOwnership(boardId: string) {
+async function verifyBoardAccess(boardId: string) {
   const supabase = await createClient()
 
   const {
@@ -16,16 +16,23 @@ async function verifyBoardOwnership(boardId: string) {
 
   const { data: board, error } = await supabase
     .from('boards')
-    .select('id')
+    .select('id, user_id, visibility')
     .eq('id', boardId)
-    .eq('user_id', user.id)
     .single()
 
   if (error || !board) {
+    throw new Error('Board not found')
+  }
+
+  const isOwner = board.user_id === user.id
+  const isPublicReadOnly = board.visibility === 'public_readonly'
+  const isPublicReadWrite = board.visibility === 'public_readwrite'
+
+  if (!isOwner && !isPublicReadOnly && !isPublicReadWrite) {
     throw new Error('Unauthorized')
   }
 
-  return user.id
+  return { userId: user.id, isOwner, isPublicReadOnly, isPublicReadWrite }
 }
 
 async function verifyListOwnership(listId: string) {
@@ -41,12 +48,20 @@ async function verifyListOwnership(listId: string) {
 
   const { data: list, error } = await supabase
     .from('lists')
-    .select('id, boards!inner(user_id)')
+    .select('id, boards!inner(user_id, visibility)')
     .eq('id', listId)
-    .eq('boards.user_id', user.id)
     .single()
 
   if (error || !list) {
+    throw new Error('List not found')
+  }
+
+  const board = list.boards as unknown as { user_id: string; visibility: string }
+  const isOwner = board.user_id === user.id
+  const isPublicReadOnly = board.visibility === 'public_readonly'
+  const isPublicReadWrite = board.visibility === 'public_readwrite'
+
+  if (!isOwner && !isPublicReadOnly && !isPublicReadWrite) {
     throw new Error('Unauthorized')
   }
 
@@ -66,12 +81,20 @@ async function verifyTaskOwnership(taskId: string) {
 
   const { data: task, error } = await supabase
     .from('tasks')
-    .select('id, boards!inner(user_id)')
+    .select('id, boards!inner(user_id, visibility)')
     .eq('id', taskId)
-    .eq('boards.user_id', user.id)
     .single()
 
   if (error || !task) {
+    throw new Error('Task not found')
+  }
+
+  const board = task.boards as unknown as { user_id: string; visibility: string }
+  const isOwner = board.user_id === user.id
+  const isPublicReadOnly = board.visibility === 'public_readonly'
+  const isPublicReadWrite = board.visibility === 'public_readwrite'
+
+  if (!isOwner && !isPublicReadOnly && !isPublicReadWrite) {
     throw new Error('Unauthorized')
   }
 
@@ -79,7 +102,7 @@ async function verifyTaskOwnership(taskId: string) {
 }
 
 export async function createList(boardId: string, title: string, position: number): Promise<List> {
-  await verifyBoardOwnership(boardId)
+  await verifyBoardAccess(boardId)
 
   const supabase = await createClient()
 
@@ -137,7 +160,7 @@ export async function createTask(
   description: string | null,
   position: number
 ): Promise<Task> {
-  await verifyBoardOwnership(boardId)
+  await verifyBoardAccess(boardId)
 
   const supabase = await createClient()
 
@@ -205,7 +228,7 @@ export async function deleteTask(taskId: string): Promise<void> {
 export async function reorderLists(listUpdates: { id: string; position: number }[]): Promise<void> {
   if (listUpdates.length === 0) return
 
-  await verifyBoardOwnership(listUpdates[0].id)
+  await verifyBoardAccess(listUpdates[0].id)
 
   const supabase = await createClient()
 

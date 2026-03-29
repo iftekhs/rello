@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useBoardStore } from '../store/useBoardStore';
+import { usePendingOpsStore } from '../store/usePendingOpsStore';
 import { deleteTask as deleteTaskAction } from '../actions';
 import { toast } from 'sonner';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -20,6 +21,7 @@ export function TaskCard({ taskId, listId }: TaskCardProps) {
     s.lists.find((l) => l.id === listId)?.tasks.find((t) => t.id === taskId),
   );
   const deleteTask = useBoardStore((s) => s.deleteTask);
+  const { registerOp, clearOp } = usePendingOpsStore();
 
   const [isPending, startTransition] = useTransition();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -29,6 +31,8 @@ export function TaskCard({ taskId, listId }: TaskCardProps) {
   const handleDelete = () => {
     const taskToDelete = { ...task };
     deleteTask(taskId, listId);
+
+    registerOp(`task:delete:${taskId}`);
 
     startTransition(async () => {
       try {
@@ -46,6 +50,8 @@ export function TaskCard({ taskId, listId }: TaskCardProps) {
         toast.error(
           error instanceof Error ? error.message : 'Failed to delete task',
         );
+      } finally {
+        clearOp(`task:delete:${taskId}`);
       }
     });
   };

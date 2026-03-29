@@ -27,10 +27,17 @@ export default async function Page({ params }: PageProps) {
     .from('boards')
     .select('*')
     .eq('id', id)
-    .eq('user_id', user.id)
     .single();
 
   if (boardError || !board) {
+    redirect('/dashboard/boards');
+  }
+
+  const isOwner = board.user_id === user.id;
+  const isPublicReadOnly = board.visibility === 'public_readonly';
+  const isPublicReadWrite = board.visibility === 'public_readwrite';
+
+  if (!isOwner && !isPublicReadOnly && !isPublicReadWrite) {
     redirect('/dashboard/boards');
   }
 
@@ -46,13 +53,12 @@ export default async function Page({ params }: PageProps) {
 
   const processedLists = (lists ?? []).map((list) => ({
     ...list,
-    tasks: (list.tasks ?? []).sort((a: Task, b: Task) => a.position - b.position),
+    tasks: (list.tasks ?? []).sort(
+      (a: Task, b: Task) => a.position - b.position,
+    ),
   })) as List[];
 
   return (
-    <BoardView
-      initialBoard={board as Board}
-      initialLists={processedLists}
-    />
+    <BoardView initialBoard={board as Board} initialLists={processedLists} />
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -17,9 +18,8 @@ interface TaskListProps {
 }
 
 export function TaskList({ listId, boardId }: TaskListProps) {
-  const tasks = useBoardStore(
-    (s) => s.lists.find((l) => l.id === listId)?.tasks ?? [],
-  );
+  const list = useBoardStore((s) => s.lists.find((l) => l.id === listId));
+  const tasks = useMemo(() => list?.tasks ?? [], [list]);
 
   const { activeItem, hoveredListId, dropIndex } = useDrag();
 

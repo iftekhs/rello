@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useBoardStore } from '../store/useBoardStore';
+import { usePendingOpsStore } from '../store/usePendingOpsStore';
 import { updateListTitle, deleteList } from '../actions';
 import { toast } from 'sonner';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -21,6 +22,7 @@ export function ListCard({ listId, isActive }: ListCardProps) {
   const boardId = useBoardStore((s) => s.board?.id);
   const updateList = useBoardStore((s) => s.updateList);
   const deleteListFromStore = useBoardStore((s) => s.deleteList);
+  const { registerOp, clearOp } = usePendingOpsStore();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(list?.title ?? '');
@@ -45,6 +47,8 @@ export function ListCard({ listId, isActive }: ListCardProps) {
     updateList({ ...list, title: newTitle });
     setIsEditing(false);
 
+    registerOp(`list:update:${listId}`);
+
     startTransition(async () => {
       try {
         await updateListTitle(listId, newTitle);
@@ -53,6 +57,8 @@ export function ListCard({ listId, isActive }: ListCardProps) {
         toast.error(
           error instanceof Error ? error.message : 'Failed to update list',
         );
+      } finally {
+        clearOp(`list:update:${listId}`);
       }
     });
   };
@@ -67,6 +73,8 @@ export function ListCard({ listId, isActive }: ListCardProps) {
     const previousList = { ...list };
     deleteListFromStore(listId);
 
+    registerOp(`list:delete:${listId}`);
+
     startTransition(async () => {
       try {
         await deleteList(listId);
@@ -75,6 +83,8 @@ export function ListCard({ listId, isActive }: ListCardProps) {
         toast.error(
           error instanceof Error ? error.message : 'Failed to delete list',
         );
+      } finally {
+        clearOp(`list:delete:${listId}`);
       }
     });
   };

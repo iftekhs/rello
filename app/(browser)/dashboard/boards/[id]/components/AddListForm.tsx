@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useBoardStore } from '../store/useBoardStore'
+import { usePendingOpsStore } from '../store/usePendingOpsStore'
 import { createList } from '../actions'
 import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -14,6 +15,7 @@ export function AddListForm() {
   const addList = useBoardStore((s) => s.addList)
   const deleteList = useBoardStore((s) => s.deleteList)
   const board = useBoardStore((s) => s.board)
+  const { registerOp, clearOp } = usePendingOpsStore()
 
   const [isExpanded, setIsExpanded] = useState(false)
   const [title, setTitle] = useState('')
@@ -41,7 +43,9 @@ export function AddListForm() {
       try {
         const newList = await createList(board.id, title.trim(), position)
         deleteList(tempId)
+        registerOp(`list:insert:${newList.id}`)
         addList(newList)
+        clearOp(`list:insert:${newList.id}`)
       } catch (error) {
         deleteList(tempId)
         toast.error(

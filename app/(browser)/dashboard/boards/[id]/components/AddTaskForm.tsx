@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useMemo } from 'react';
 import { useBoardStore } from '../store/useBoardStore';
+import { usePendingOpsStore } from '../store/usePendingOpsStore';
 import { createTask } from '../actions';
 import { toast } from 'sonner';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -17,11 +18,11 @@ interface AddTaskFormProps {
 }
 
 export function AddTaskForm({ listId, boardId }: AddTaskFormProps) {
-  const tasks = useBoardStore(
-    (s) => s.lists.find((l) => l.id === listId)?.tasks ?? [],
-  );
+  const list = useBoardStore((s) => s.lists.find((l) => l.id === listId));
+  const tasks = useMemo(() => list?.tasks ?? [], [list]);
   const addTask = useBoardStore((s) => s.addTask);
   const deleteTask = useBoardStore((s) => s.deleteTask);
+  const { registerOp, clearOp } = usePendingOpsStore();
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [title, setTitle] = useState('');
@@ -59,7 +60,9 @@ export function AddTaskForm({ listId, boardId }: AddTaskFormProps) {
           position,
         );
         deleteTask(tempId, listId);
+        registerOp(`task:insert:${newTask.id}`);
         addTask(newTask);
+        clearOp(`task:insert:${newTask.id}`);
       } catch (error) {
         deleteTask(tempId, listId);
         toast.error(

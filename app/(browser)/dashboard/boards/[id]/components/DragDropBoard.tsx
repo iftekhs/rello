@@ -18,6 +18,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { useBoardStore } from '../store/useBoardStore'
+import { usePendingOpsStore } from '../store/usePendingOpsStore'
 import { reorderLists as reorderListsAction } from '../actions'
 import { reorderTasksInList as reorderTasksInListAction } from '../actions'
 import { moveTaskToList } from '../actions'
@@ -33,6 +34,7 @@ function DragDropBoardInner() {
   const moveTask = useBoardStore((s) => s.moveTask)
   const reorderTasksInList = useBoardStore((s) => s.reorderTasksInList)
   const { activeItem, setActiveItem, setHoveredListId, setDropIndex } = useDrag()
+  const { registerOp, clearOp } = usePendingOpsStore()
 
   const [, startTransition] = useTransition()
 
