@@ -34,6 +34,7 @@ import { Field, FieldLabel } from '@/components/ui/field';
 import { Add01Icon, MoreVerticalIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { createBoard, updateBoard, deleteBoard } from '../actions';
+import Link from 'next/link';
 
 interface Board {
   id: string;
@@ -201,43 +202,42 @@ export function BoardClient({ initialBoards }: BoardClientProps) {
       ) : (
         <div className="grid auto-rows-min gap-4 md:grid-cols-3 lg:grid-cols-4">
           {initialBoards.map((board) => (
-            <Card
-              key={board.id}
-              className="relative cursor-pointer transition-colors hover:bg-muted/50"
-            >
-              <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                <CardTitle className="text-base font-medium">
-                  {board.title}
-                </CardTitle>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      className="absolute right-2 top-2"
-                    >
-                      <HugeiconsIcon icon={MoreVerticalIcon} />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => openEditDialog(board)}>
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
-                      onClick={() => openDeleteDialog(board)}
-                    >
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xs text-muted-foreground">
-                  Created {formatDate(board.created_at)}
-                </p>
-              </CardContent>
-            </Card>
+            <Link key={board.id} href={`/dashboard/boards/${board.id}`}>
+              <Card className="relative cursor-pointer transition-colors hover:bg-muted/50">
+                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                  <CardTitle className="text-base font-medium">
+                    {board.title}
+                  </CardTitle>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="absolute right-2 top-2"
+                      >
+                        <HugeiconsIcon icon={MoreVerticalIcon} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => openEditDialog(board)}>
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => openDeleteDialog(board)}
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-muted-foreground">
+                    Created {formatDate(board.created_at)}
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       )}
