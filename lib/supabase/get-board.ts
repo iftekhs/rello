@@ -1,17 +1,11 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { BoardVisibility } from '@/types';
-
-export interface Board {
-  id: string;
-  user_id: string;
-  visibility: BoardVisibility;
-}
+import { Board } from '@/types';
 
 export async function getAuthorizedBoard(
   supabase: SupabaseClient,
   boardId: string,
   userId: string,
-  requireOwner: boolean = false
+  requireOwner: boolean = false,
 ): Promise<Board> {
   const { data: board, error } = await supabase
     .from('boards')
