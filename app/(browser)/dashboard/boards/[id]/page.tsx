@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { BoardView } from './components/BoardView';
-import { Board, List, Task } from './store/useBoardStore';
+import { BoardView } from './_components/BoardView';
+import { Board, List, Task } from '@/store/useBoardStore';
 
 export const dynamic = 'force-dynamic';
 

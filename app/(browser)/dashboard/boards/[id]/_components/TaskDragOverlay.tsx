@@ -1,6 +1,6 @@
 'use client'
 
-import { useBoardStore } from '../store/useBoardStore'
+import { useBoardStore } from '@/store/useBoardStore'
 import { Card } from '@/components/ui/card'
 
 interface TaskDragOverlayProps {

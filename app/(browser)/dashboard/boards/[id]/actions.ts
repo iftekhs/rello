@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { List, Task } from './store/useBoardStore'
+import { List, Task } from '@/store/useBoardStore'
 
 async function verifyBoardAccess(boardId: string) {
   const supabase = await createClient()

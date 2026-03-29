@@ -6,7 +6,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { useBoardStore } from '../store/useBoardStore';
+import { useBoardStore } from '@/store/useBoardStore';
 import { SortableTaskCard } from './SortableTaskCard';
 import { AddTaskForm } from './AddTaskForm';
 import { useDrag } from './DragContext';

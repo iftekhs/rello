@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useBoardStore, Board, List } from '../store/useBoardStore'
-import { useRealtimeSync } from '../hooks/useRealtimeSync'
+import { useBoardStore, Board, List } from '@/store/useBoardStore'
+import { useRealtimeSync } from '../_hooks/useRealtimeSync'
 import { DragDropBoard } from './DragDropBoard'
 import { AddListForm } from './AddListForm'
 import { RealtimeIndicator } from './RealtimeIndicator'

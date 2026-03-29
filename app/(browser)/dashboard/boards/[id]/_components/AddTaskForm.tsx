@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useTransition, useMemo } from 'react';
-import { useBoardStore } from '../store/useBoardStore';
-import { usePendingOpsStore } from '../store/usePendingOpsStore';
+import { useBoardStore } from '@/store/useBoardStore';
+import { usePendingOpsStore } from '@/store/usePendingOpsStore';
 import { createTask } from '../actions';
 import { toast } from 'sonner';
 import { HugeiconsIcon } from '@hugeicons/react';

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useBoardStore, List, Task } from '../store/useBoardStore'
-import { usePendingOpsStore } from '../store/usePendingOpsStore'
+import { useBoardStore, List, Task } from '@/store/useBoardStore'
+import { usePendingOpsStore } from '@/store/usePendingOpsStore'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
 type RealtimeStatus = 'connected' | 'connecting' | 'disconnected'

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { BoardClient } from './components/BoardClient';
+import { BoardClient } from './_components/BoardClient';
 
 export const dynamic = 'force-dynamic';
 

@@ -17,8 +17,8 @@ import {
   horizontalListSortingStrategy,
   arrayMove,
 } from '@dnd-kit/sortable'
-import { useBoardStore } from '../store/useBoardStore'
-import { usePendingOpsStore } from '../store/usePendingOpsStore'
+import { useBoardStore } from '@/store/useBoardStore'
+import { usePendingOpsStore } from '@/store/usePendingOpsStore'
 import { reorderLists as reorderListsAction } from '../actions'
 import { reorderTasksInList as reorderTasksInListAction } from '../actions'
 import { moveTaskToList } from '../actions'
