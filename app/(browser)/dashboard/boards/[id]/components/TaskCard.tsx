@@ -21,7 +21,7 @@ export function TaskCard({ taskId, listId }: TaskCardProps) {
     s.lists.find((l) => l.id === listId)?.tasks.find((t) => t.id === taskId),
   );
   const deleteTask = useBoardStore((s) => s.deleteTask);
-  const { registerOp, clearOp } = usePendingOpsStore();
+  const { registerOp, clearOp, confirmEcho, bumpVersion } = usePendingOpsStore();
 
   const [isPending, startTransition] = useTransition();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -32,12 +32,15 @@ export function TaskCard({ taskId, listId }: TaskCardProps) {
     const taskToDelete = { ...task };
     deleteTask(taskId, listId);
 
+    bumpVersion(`task:${taskId}`);
     registerOp(`task:delete:${taskId}`);
 
     startTransition(async () => {
       try {
         await deleteTaskAction(taskId);
+        clearOp(`task:delete:${taskId}`);
       } catch (error) {
+        confirmEcho(`task:delete:${taskId}`);
         const list = useBoardStore
           .getState()
           .lists.find((l) => l.id === listId);
@@ -50,8 +53,6 @@ export function TaskCard({ taskId, listId }: TaskCardProps) {
         toast.error(
           error instanceof Error ? error.message : 'Failed to delete task',
         );
-      } finally {
-        clearOp(`task:delete:${taskId}`);
       }
     });
   };

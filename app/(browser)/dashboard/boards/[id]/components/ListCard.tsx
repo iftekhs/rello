@@ -23,7 +23,7 @@ export function ListCard({ listId, isActive, dragHandleProps }: ListCardProps) {
   const boardId = useBoardStore((s) => s.board?.id);
   const updateList = useBoardStore((s) => s.updateList);
   const deleteListFromStore = useBoardStore((s) => s.deleteList);
-  const { registerOp, clearOp } = usePendingOpsStore();
+  const { registerOp, clearOp, confirmEcho, bumpVersion } = usePendingOpsStore();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(list?.title ?? '');
@@ -48,19 +48,19 @@ export function ListCard({ listId, isActive, dragHandleProps }: ListCardProps) {
     updateList({ ...list, title: newTitle });
     setIsEditing(false);
 
+    bumpVersion(`list:${listId}`);
     registerOp(`list:update:${listId}`);
-    usePendingOpsStore.getState().addRecent(`list:${listId}`);
 
     startTransition(async () => {
       try {
         await updateListTitle(listId, newTitle);
+        clearOp(`list:update:${listId}`);
       } catch (error) {
+        confirmEcho(`list:update:${listId}`);
         updateList({ ...list, title: previousTitle });
         toast.error(
           error instanceof Error ? error.message : 'Failed to update list',
         );
-      } finally {
-        clearOp(`list:update:${listId}`);
       }
     });
   };
@@ -75,18 +75,19 @@ export function ListCard({ listId, isActive, dragHandleProps }: ListCardProps) {
     const previousList = { ...list };
     deleteListFromStore(listId);
 
+    bumpVersion(`list:${listId}`);
     registerOp(`list:delete:${listId}`);
 
     startTransition(async () => {
       try {
         await deleteList(listId);
+        clearOp(`list:delete:${listId}`);
       } catch (error) {
+        confirmEcho(`list:delete:${listId}`);
         updateList(previousList);
         toast.error(
           error instanceof Error ? error.message : 'Failed to delete list',
         );
-      } finally {
-        clearOp(`list:delete:${listId}`);
       }
     });
   };

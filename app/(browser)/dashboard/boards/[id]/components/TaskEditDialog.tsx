@@ -29,7 +29,7 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
   const [description, setDescription] = useState(task.description ?? '')
   const [isPending, startTransition] = useTransition()
   const updateTaskInStore = useBoardStore((s) => s.updateTask)
-  const { registerOp, clearOp } = usePendingOpsStore()
+  const { registerOp, clearOp, confirmEcho, bumpVersion } = usePendingOpsStore()
 
   const handleSave = () => {
     if (!title.trim()) return
@@ -44,19 +44,19 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
     updateTaskInStore(updatedTask)
     onClose()
 
+    bumpVersion(`task:${task.id}`)
     registerOp(`task:update:${task.id}`)
-    usePendingOpsStore.getState().addRecent(`task:${task.id}`)
 
     startTransition(async () => {
       try {
         await updateTaskAction(task.id, title.trim(), description.trim() || null)
+        clearOp(`task:update:${task.id}`)
       } catch (error) {
+        confirmEcho(`task:update:${task.id}`)
         updateTaskInStore(previousTask)
         toast.error(
           error instanceof Error ? error.message : 'Failed to update task'
         )
-      } finally {
-        clearOp(`task:update:${task.id}`)
       }
     })
   }

@@ -13,6 +13,7 @@ export function useRealtimeSync(boardId: string) {
 
   useEffect(() => {
     if (!boardId) return
+    let isActive = true
 
     console.log('[Realtime] Setting up channel for board:', boardId)
 
@@ -29,10 +30,15 @@ export function useRealtimeSync(boardId: string) {
           filter: `board_id=eq.${boardId}`,
         },
         (payload) => {
+          if (!isActive) return
           console.log('[Realtime] LIST INSERT:', payload.new)
           const key = `list:insert:${payload.new.id}`
-          if (usePendingOpsStore.getState().isPending(key)) return
-          if (usePendingOpsStore.getState().isRecent(`list:${payload.new.id}`)) return
+          const { isPending, confirmEcho } = usePendingOpsStore.getState()
+          
+          if (isPending(key)) {
+            confirmEcho(key)
+            return
+          }
           
           const newList: List = { ...payload.new as List, tasks: [] }
           useBoardStore.getState().addList(newList)
@@ -47,22 +53,23 @@ export function useRealtimeSync(boardId: string) {
           filter: `board_id=eq.${boardId}`,
         },
         (payload) => {
+          if (!isActive) return
           console.log('[Realtime] LIST UPDATE:', payload.new)
           const key = `list:update:${payload.new.id}`
-          if (usePendingOpsStore.getState().isPending(key)) return
-          if (usePendingOpsStore.getState().isRecent(`list:${payload.new.id}`)) return
+          const entityKey = `list:${payload.new.id}`
+          const { isPending, confirmEcho, getVersion } = usePendingOpsStore.getState()
           
-          const updatedList: List = payload.new as List
-          const lists = useBoardStore.getState().lists
-          const existingList = lists.find((l) => l.id === updatedList.id)
-          
-          if (existingList &&
-              existingList.id === updatedList.id &&
-              existingList.title === updatedList.title &&
-              existingList.position === updatedList.position) {
+          if (isPending(key)) {
+            confirmEcho(key)
             return
           }
           
+          const localVersion = getVersion(entityKey)
+          if (localVersion > 0) {
+            return
+          }
+          
+          const updatedList: List = payload.new as List
           useBoardStore.getState().updateList(updatedList)
         }
       )
@@ -75,10 +82,15 @@ export function useRealtimeSync(boardId: string) {
           filter: `board_id=eq.${boardId}`,
         },
         (payload) => {
+          if (!isActive) return
           console.log('[Realtime] LIST DELETE:', payload.old)
           const key = `list:delete:${payload.old.id}`
-          if (usePendingOpsStore.getState().isPending(key)) return
-          if (usePendingOpsStore.getState().isRecent(`list:${payload.old.id}`)) return
+          const { isPending, confirmEcho } = usePendingOpsStore.getState()
+          
+          if (isPending(key)) {
+            confirmEcho(key)
+            return
+          }
           
           useBoardStore.getState().deleteList(payload.old.id as string)
         }
@@ -92,10 +104,15 @@ export function useRealtimeSync(boardId: string) {
           filter: `board_id=eq.${boardId}`,
         },
         (payload) => {
+          if (!isActive) return
           console.log('[Realtime] TASK INSERT:', payload.new)
           const key = `task:insert:${payload.new.id}`
-          if (usePendingOpsStore.getState().isPending(key)) return
-          if (usePendingOpsStore.getState().isRecent(`task:${payload.new.id}`)) return
+          const { isPending, confirmEcho } = usePendingOpsStore.getState()
+          
+          if (isPending(key)) {
+            confirmEcho(key)
+            return
+          }
           
           const newTask: Task = payload.new as Task
           const lists = useBoardStore.getState().lists
@@ -116,26 +133,23 @@ export function useRealtimeSync(boardId: string) {
           filter: `board_id=eq.${boardId}`,
         },
         (payload) => {
+          if (!isActive) return
           console.log('[Realtime] TASK UPDATE:', payload.new)
           const key = `task:update:${payload.new.id}`
-          if (usePendingOpsStore.getState().isPending(key)) return
-          if (usePendingOpsStore.getState().isRecent(`task:${payload.new.id}`)) return
+          const entityKey = `task:${payload.new.id}`
+          const { isPending, confirmEcho, getVersion } = usePendingOpsStore.getState()
           
-          const updatedTask: Task = payload.new as Task
-          const lists = useBoardStore.getState().lists
-          const existingTask = lists
-            .flatMap((l) => l.tasks)
-            .find((t) => t.id === updatedTask.id)
-          
-          if (existingTask && 
-              existingTask.id === updatedTask.id &&
-              existingTask.title === updatedTask.title &&
-              existingTask.description === updatedTask.description &&
-              existingTask.position === updatedTask.position &&
-              existingTask.list_id === updatedTask.list_id) {
+          if (isPending(key)) {
+            confirmEcho(key)
             return
           }
           
+          const localVersion = getVersion(entityKey)
+          if (localVersion > 0) {
+            return
+          }
+          
+          const updatedTask: Task = payload.new as Task
           useBoardStore.getState().handleRealtimeTaskUpdate(updatedTask)
         }
       )
@@ -148,10 +162,15 @@ export function useRealtimeSync(boardId: string) {
           filter: `board_id=eq.${boardId}`,
         },
         (payload) => {
+          if (!isActive) return
           console.log('[Realtime] TASK DELETE:', payload.old)
           const key = `task:delete:${payload.old.id}`
-          if (usePendingOpsStore.getState().isPending(key)) return
-          if (usePendingOpsStore.getState().isRecent(`task:${payload.old.id}`)) return
+          const { isPending, confirmEcho } = usePendingOpsStore.getState()
+          
+          if (isPending(key)) {
+            confirmEcho(key)
+            return
+          }
           
           const lists = useBoardStore.getState().lists
           const listId = lists.find((l) => l.tasks.some((t) => t.id === payload.old.id))?.id
@@ -161,6 +180,7 @@ export function useRealtimeSync(boardId: string) {
         }
       )
       .subscribe((channelStatus) => {
+        if (!isActive) return
         console.log('[Realtime] Channel status:', channelStatus)
         if (channelStatus === 'SUBSCRIBED') {
           setStatus('connected')
@@ -172,6 +192,7 @@ export function useRealtimeSync(boardId: string) {
       })
 
     return () => {
+      isActive = false
       console.log('[Realtime] Cleaning up channel')
       supabase.removeChannel(channel)
     }

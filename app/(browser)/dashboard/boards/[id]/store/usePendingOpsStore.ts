@@ -1,49 +1,97 @@
 import { create } from 'zustand'
 
 interface PendingOpsState {
-  pendingOps: Set<string>
-  recentIds: Set<string>
+  pendingOps: Map<string, number>
+  awaitingEcho: Map<string, number>
+  localVersions: Map<string, number>
+
   registerOp: (key: string) => void
   clearOp: (key: string) => void
+  confirmEcho: (key: string) => void
   isPending: (key: string) => boolean
-  addRecent: (id: string) => void
-  isRecent: (id: string) => boolean
+  bumpVersion: (entityKey: string) => number
+  getVersion: (entityKey: string) => number
 }
 
 export const usePendingOpsStore = create<PendingOpsState>()((set, get) => ({
-  pendingOps: new Set<string>(),
-  recentIds: new Set<string>(),
+  pendingOps: new Map<string, number>(),
+  awaitingEcho: new Map<string, number>(),
+  localVersions: new Map<string, number>(),
 
   registerOp: (key: string) =>
     set((state) => {
-      const newSet = new Set(state.pendingOps)
-      newSet.add(key)
-      return { pendingOps: newSet }
+      const newMap = new Map(state.pendingOps)
+      newMap.set(key, Date.now())
+      return { pendingOps: newMap }
     }),
 
   clearOp: (key: string) =>
     set((state) => {
-      const newSet = new Set(state.pendingOps)
-      newSet.delete(key)
-      return { pendingOps: newSet }
+      const newPending = new Map(state.pendingOps)
+      const timestamp = newPending.get(key)
+      newPending.delete(key)
+
+      if (timestamp !== undefined) {
+        const newAwaiting = new Map(state.awaitingEcho)
+        newAwaiting.set(key, timestamp)
+        return { pendingOps: newPending, awaitingEcho: newAwaiting }
+      }
+      return { pendingOps: newPending }
     }),
 
-  isPending: (key: string) => get().pendingOps.has(key),
-
-  addRecent: (id: string) => {
+  confirmEcho: (key: string) =>
     set((state) => {
-      const newSet = new Set(state.recentIds)
-      newSet.add(id)
-      return { recentIds: newSet }
-    })
-    setTimeout(() => {
-      set((state) => {
-        const newSet = new Set(state.recentIds)
-        newSet.delete(id)
-        return { recentIds: newSet }
-      })
-    }, 2000)
+      const newAwaiting = new Map(state.awaitingEcho)
+      newAwaiting.delete(key)
+
+      const entityKey = key.replace(/^(list|task):(insert|update|delete):/, '$1:')
+      const newVersions = new Map(state.localVersions)
+      newVersions.delete(entityKey)
+
+      return { awaitingEcho: newAwaiting, localVersions: newVersions }
+    }),
+
+  isPending: (key: string) => {
+    const state = get()
+    return state.pendingOps.has(key) || state.awaitingEcho.has(key)
   },
 
-  isRecent: (id: string) => get().recentIds.has(id),
+  bumpVersion: (entityKey: string) => {
+    let newVersion = 1
+    set((state) => {
+      const newMap = new Map(state.localVersions)
+      const current = newMap.get(entityKey) ?? 0
+      newVersion = current + 1
+      newMap.set(entityKey, newVersion)
+      return { localVersions: newMap }
+    })
+    return newVersion
+  },
+
+  getVersion: (entityKey: string) => {
+    return get().localVersions.get(entityKey) ?? 0
+  },
 }))
+
+if (typeof window !== 'undefined') {
+  setInterval(() => {
+    const now = Date.now()
+    const state = usePendingOpsStore.getState()
+    const newAwaiting = new Map(state.awaitingEcho)
+
+    for (const [key, timestamp] of newAwaiting) {
+      if (now - timestamp > 8000) {
+        newAwaiting.delete(key)
+
+        const entityKey = key.replace(/^(list|task):(insert|update|delete):/, '$1:')
+        const newVersions = new Map(state.localVersions)
+        newVersions.delete(entityKey)
+
+        usePendingOpsStore.setState({
+          awaitingEcho: newAwaiting,
+          localVersions: newVersions
+        })
+      }
+    }
+  }, 10000)
+}

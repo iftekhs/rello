@@ -27,6 +27,7 @@ import { SortableListCard } from './SortableListCard'
 import { ListDragOverlay } from './ListDragOverlay'
 import { TaskDragOverlay } from './TaskDragOverlay'
 import { DragProvider, useDrag } from './DragContext'
+import { debounce } from '@/lib/utils'
 
 function DragDropBoardInner() {
   const lists = useBoardStore((s) => s.lists)
@@ -48,6 +49,21 @@ function DragDropBoardInner() {
   const sortedLists = useMemo(
     () => lists.slice().sort((a, b) => a.position - b.position),
     [lists]
+  )
+
+  const { registerOp, clearOp, confirmEcho, bumpVersion } = usePendingOpsStore()
+
+  const debouncedReorderTasks = useMemo(
+    () =>
+      debounce(async (activeListId: string, newTasks: { id: string; position: number }[]) => {
+        try {
+          await reorderTasksInListAction(newTasks, activeListId)
+        } catch (error) {
+          confirmEcho(`task:update:${activeListId}`)
+          toast.error(error instanceof Error ? error.message : 'Failed to save changes')
+        }
+      }, 300),
+    [confirmEcho]
   )
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
@@ -104,15 +120,19 @@ function DragDropBoardInner() {
           position: i,
         }))
 
-        // Mark as recent BEFORE updating local state
-        newLists.forEach((l) => usePendingOpsStore.getState().addRecent(`list:${l.id}`))
+        newLists.forEach((l) => {
+          bumpVersion(`list:${l.id}`)
+          registerOp(`list:update:${l.id}`)
+        })
         
         reorderLists(newLists)
 
         startTransition(async () => {
           try {
             await reorderListsAction(newLists.map((l) => ({ id: l.id, position: l.position })))
+            newLists.forEach((l) => clearOp(`list:update:${l.id}`))
           } catch (error) {
+            newLists.forEach((l) => confirmEcho(`list:update:${l.id}`))
             reorderLists(previousLists)
             toast.error(error instanceof Error ? error.message : 'Failed to save changes')
           }
@@ -133,26 +153,18 @@ function DragDropBoardInner() {
         const newIndex = list.tasks.findIndex((t) => t.id === overId)
 
         if (oldIndex !== newIndex && newIndex >= 0) {
-          const previousTasks = [...list.tasks]
           const newTasks = arrayMove(list.tasks, oldIndex, newIndex).map((t, i) => ({
             ...t,
             position: i,
           }))
 
-          newTasks.forEach((t) => usePendingOpsStore.getState().addRecent(`task:${t.id}`))
+          newTasks.forEach((t) => {
+            bumpVersion(`task:${t.id}`)
+            registerOp(`task:update:${t.id}`)
+          })
           reorderTasksInList(activeListId, newTasks)
 
-          startTransition(async () => {
-            try {
-              await reorderTasksInListAction(
-                newTasks.map((t) => ({ id: t.id, position: t.position })),
-                activeListId
-              )
-            } catch (error) {
-              reorderTasksInList(activeListId, previousTasks)
-              toast.error(error instanceof Error ? error.message : 'Failed to save changes')
-            }
-          })
+          debouncedReorderTasks(activeListId, newTasks.map((t) => ({ id: t.id, position: t.position })))
         }
       } else {
         const toList = lists.find((l) => l.id === overListId)
@@ -162,19 +174,22 @@ function DragDropBoardInner() {
           ? toList.tasks.findIndex((t) => t.id === overId)
           : toList.tasks.length
 
-        usePendingOpsStore.getState().addRecent(`task:${activeTaskId}`)
+        bumpVersion(`task:${activeTaskId}`)
+        registerOp(`task:update:${activeTaskId}`)
         moveTask(activeTaskId, activeListId, overListId, toIndex)
 
         startTransition(async () => {
           try {
             await moveTaskToList(activeTaskId, overListId, toIndex, [], activeListId)
+            clearOp(`task:update:${activeTaskId}`)
           } catch (error) {
+            confirmEcho(`task:update:${activeTaskId}`)
             toast.error(error instanceof Error ? error.message : 'Failed to save changes')
           }
         })
       }
     }
-  }, [lists, setActiveItem, setHoveredListId, setDropIndex, reorderLists, reorderTasksInList, moveTask, startTransition])
+  }, [lists, setActiveItem, setHoveredListId, setDropIndex, reorderLists, reorderTasksInList, moveTask, startTransition, registerOp, clearOp, confirmEcho, bumpVersion, debouncedReorderTasks])
 
   return (
     <DndContext

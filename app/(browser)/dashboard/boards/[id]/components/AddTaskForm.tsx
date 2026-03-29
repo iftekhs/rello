@@ -61,7 +61,6 @@ export function AddTaskForm({ listId, boardId }: AddTaskFormProps) {
         );
         deleteTask(tempId, listId);
         registerOp(`task:insert:${newTask.id}`);
-        usePendingOpsStore.getState().addRecent(`task:${newTask.id}`);
         addTask(newTask);
         clearOp(`task:insert:${newTask.id}`);
       } catch (error) {
