@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useState, useTransition } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +33,7 @@ import {
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Add01Icon, MoreVerticalIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { createBoard, updateBoard, deleteBoard } from '../actions';
 
 interface Board {
   id: string;
@@ -44,13 +44,10 @@ interface Board {
 
 interface BoardClientProps {
   initialBoards: Board[];
-  userId: string;
 }
 
-export function BoardClient({ initialBoards, userId }: BoardClientProps) {
-  const supabase = createClient();
-  const [boards, setBoards] = useState<Board[]>(initialBoards);
-  const [loading] = useState(false);
+export function BoardClient({ initialBoards }: BoardClientProps) {
+  const [isPending, startTransition] = useTransition();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -60,42 +57,25 @@ export function BoardClient({ initialBoards, userId }: BoardClientProps) {
   const [editBoardTitle, setEditBoardTitle] = useState('');
   const [selectedBoard, setSelectedBoard] = useState<Board | null>(null);
 
-  const [isCreating, setIsCreating] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  async function handleCreateBoard() {
+  function handleCreateBoard() {
     if (!newBoardTitle.trim()) {
       toast.error('Title is required');
       return;
     }
 
-    setIsCreating(true);
-
-    const { data, error } = await supabase
-      .from('boards')
-      .insert({
-        title: newBoardTitle.trim(),
-        user_id: userId,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      toast.error('Failed to create board');
-      console.error('Error creating board:', error);
-      setIsCreating(false);
-      return;
-    }
-
-    setBoards([data, ...boards]);
-    setNewBoardTitle('');
-    setIsCreateDialogOpen(false);
-    toast.success('Board created successfully');
-    setIsCreating(false);
+    startTransition(async () => {
+      try {
+        await createBoard(newBoardTitle);
+        setNewBoardTitle('');
+        setIsCreateDialogOpen(false);
+        toast.success('Board created successfully');
+      } catch {
+        toast.error('Failed to create board');
+      }
+    });
   }
 
-  async function handleUpdateBoard() {
+  function handleUpdateBoard() {
     if (!editBoardTitle.trim()) {
       toast.error('Title is required');
       return;
@@ -106,57 +86,35 @@ export function BoardClient({ initialBoards, userId }: BoardClientProps) {
       return;
     }
 
-    setIsUpdating(true);
-
-    const { data, error } = await supabase
-      .from('boards')
-      .update({ title: editBoardTitle.trim() })
-      .eq('id', selectedBoard.id)
-      .eq('user_id', userId)
-      .select()
-      .single();
-
-    if (error) {
-      toast.error('Failed to update board');
-      console.error('Error updating board:', error);
-      setIsUpdating(false);
-      return;
-    }
-
-    setBoards(boards.map((b) => (b.id === data.id ? data : b)));
-    setEditBoardTitle('');
-    setSelectedBoard(null);
-    setIsEditDialogOpen(false);
-    toast.success('Board updated successfully');
-    setIsUpdating(false);
+    startTransition(async () => {
+      try {
+        await updateBoard(selectedBoard.id, editBoardTitle);
+        setEditBoardTitle('');
+        setSelectedBoard(null);
+        setIsEditDialogOpen(false);
+        toast.success('Board updated successfully');
+      } catch {
+        toast.error('Failed to update board');
+      }
+    });
   }
 
-  async function handleDeleteBoard() {
+  function handleDeleteBoard() {
     if (!selectedBoard) {
       toast.error('Invalid board');
       return;
     }
 
-    setIsDeleting(true);
-
-    const { error } = await supabase
-      .from('boards')
-      .delete()
-      .eq('id', selectedBoard.id)
-      .eq('user_id', userId);
-
-    if (error) {
-      toast.error('Failed to delete board');
-      console.error('Error deleting board:', error);
-      setIsDeleting(false);
-      return;
-    }
-
-    setBoards(boards.filter((b) => b.id !== selectedBoard.id));
-    setSelectedBoard(null);
-    setIsDeleteDialogOpen(false);
-    toast.success('Board deleted successfully');
-    setIsDeleting(false);
+    startTransition(async () => {
+      try {
+        await deleteBoard(selectedBoard.id);
+        setSelectedBoard(null);
+        setIsDeleteDialogOpen(false);
+        toast.success('Board deleted successfully');
+      } catch {
+        toast.error('Failed to delete board');
+      }
+    });
   }
 
   function openEditDialog(board: Board) {
@@ -179,7 +137,9 @@ export function BoardClient({ initialBoards, userId }: BoardClientProps) {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+    <div
+      className={`flex flex-1 flex-col gap-4 p-4 pt-0 ${isPending ? 'opacity-50 pointer-events-none' : ''}`}
+    >
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Boards</h1>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -222,26 +182,17 @@ export function BoardClient({ initialBoards, userId }: BoardClientProps) {
               </Button>
               <Button
                 onClick={handleCreateBoard}
-                disabled={isCreating || !newBoardTitle.trim()}
+                disabled={isPending || !newBoardTitle.trim()}
               >
-                {isCreating ? 'Creating...' : 'Create'}
+                {isPending ? 'Creating...' : 'Create'}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      {loading ? (
-        <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="aspect-video rounded-xl bg-muted/50 animate-pulse"
-            />
-          ))}
-        </div>
-      ) : boards.length === 0 ? (
-        <div className="flex min-h-[200px] flex-col items-center justify-center rounded-xl bg-muted/50 p-8 text-center">
+      {initialBoards.length === 0 ? (
+        <div className="flex min-h-50 flex-col items-center justify-center rounded-xl bg-muted/50 p-8 text-center">
           <p className="text-muted-foreground">No boards yet</p>
           <p className="text-sm text-muted-foreground">
             Create your first board to get started
@@ -249,7 +200,7 @@ export function BoardClient({ initialBoards, userId }: BoardClientProps) {
         </div>
       ) : (
         <div className="grid auto-rows-min gap-4 md:grid-cols-3 lg:grid-cols-4">
-          {boards.map((board) => (
+          {initialBoards.map((board) => (
             <Card
               key={board.id}
               className="relative cursor-pointer transition-colors hover:bg-muted/50"
@@ -325,9 +276,9 @@ export function BoardClient({ initialBoards, userId }: BoardClientProps) {
             </Button>
             <Button
               onClick={handleUpdateBoard}
-              disabled={isUpdating || !editBoardTitle.trim()}
+              disabled={isPending || !editBoardTitle.trim()}
             >
-              {isUpdating ? 'Saving...' : 'Save'}
+              {isPending ? 'Saving...' : 'Save'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -348,16 +299,16 @@ export function BoardClient({ initialBoards, userId }: BoardClientProps) {
           <AlertDialogFooter>
             <AlertDialogCancel
               onClick={() => setIsDeleteDialogOpen(false)}
-              disabled={isDeleting}
+              disabled={isPending}
             >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteBoard}
-              disabled={isDeleting}
+              disabled={isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? 'Deleting...' : 'Delete'}
+              {isPending ? 'Deleting...' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

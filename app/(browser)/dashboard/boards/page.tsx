@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { BoardClient } from './BoardClient';
+import { BoardClient } from './components/BoardClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,5 +21,5 @@ export default async function BoardsPage() {
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
-  return <BoardClient initialBoards={boards || []} userId={user.id} />;
+  return <BoardClient initialBoards={boards || []} />;
 }
