@@ -3,47 +3,16 @@
 import { revalidatePath } from 'next/cache';
 import { getAuthenticatedUser } from '@/lib/supabase/get-user';
 
-export async function createDefaultBoard() {
-  const { supabase, user } = await getAuthenticatedUser();
-
-  const { data: board, error: boardError } = await supabase
-    .from('boards')
-    .insert({ title: 'Todo', user_id: user.id, visibility: 'public_readwrite' })
-    .select()
-    .single();
-
-  if (boardError || !board) {
-    throw new Error('Failed to create board');
-  }
-
-  const defaultLists = [
-    { title: 'To Do', position: 0 },
-    { title: 'In Progress', position: 1 },
-    { title: 'Done', position: 2 },
-  ];
-
-  const { error: listsError } = await supabase.from('lists').insert(
-    defaultLists.map((list) => ({
-      board_id: board.id,
-      title: list.title,
-      position: list.position,
-    })),
-  );
-
-  if (listsError) {
-    throw new Error('Failed to create default lists');
-  }
-
-  revalidatePath('/dashboard/boards');
-  return board;
-}
-
 export async function createBoard(title: string) {
   const { supabase, user } = await getAuthenticatedUser();
 
   const { data: board, error: boardError } = await supabase
     .from('boards')
-    .insert({ title: title.trim(), user_id: user.id, visibility: 'public_readwrite' })
+    .insert({
+      title: title.trim(),
+      user_id: user.id,
+      visibility: 'public_readwrite',
+    })
     .select()
     .single();
 

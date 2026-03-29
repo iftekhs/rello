@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { createDefaultBoard } from '@/app/(browser)/dashboard/boards/actions';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -75,10 +74,6 @@ export function RegisterForm({
     const {
       data: { user },
     } = await supabase.auth.getUser();
-
-    if (user) {
-      await createDefaultBoard();
-    }
 
     router.push('/dashboard/boards');
     router.refresh();
