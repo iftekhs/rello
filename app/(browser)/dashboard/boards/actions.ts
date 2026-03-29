@@ -16,7 +16,7 @@ export async function createDefaultBoard() {
 
   const { data: board, error: boardError } = await supabase
     .from('boards')
-    .insert({ title: 'Todo', user_id: user.id })
+    .insert({ title: 'Todo', user_id: user.id, visibility: 'public_readwrite' })
     .select()
     .single();
 
