@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { getAuthenticatedUser } from '@/lib/supabase/get-user';
 import { BoardView } from './_components/BoardView';
 import { Board, List, Task } from '@/store/useBoardStore';
 
@@ -10,16 +10,7 @@ interface PageProps {
 }
 
 export default async function Page({ params }: PageProps) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    redirect('/login');
-  }
+  const { supabase, user } = await getAuthenticatedUser();
 
   const { id } = await params;
 

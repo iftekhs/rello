@@ -3,6 +3,7 @@ export type Board = {
   title: string
   user_id: string
   created_at: string
+  visibility: 'private' | 'public_readonly' | 'public_readwrite'
 }
 
 export type Task = {
