@@ -32,6 +32,8 @@ export function useRealtimeSync(boardId: string) {
           console.log('[Realtime] LIST INSERT:', payload.new)
           const key = `list:insert:${payload.new.id}`
           if (usePendingOpsStore.getState().isPending(key)) return
+          if (usePendingOpsStore.getState().isRecent(`list:${payload.new.id}`)) return
+          
           const newList: List = { ...payload.new as List, tasks: [] }
           useBoardStore.getState().addList(newList)
         }
@@ -48,7 +50,19 @@ export function useRealtimeSync(boardId: string) {
           console.log('[Realtime] LIST UPDATE:', payload.new)
           const key = `list:update:${payload.new.id}`
           if (usePendingOpsStore.getState().isPending(key)) return
+          if (usePendingOpsStore.getState().isRecent(`list:${payload.new.id}`)) return
+          
           const updatedList: List = payload.new as List
+          const lists = useBoardStore.getState().lists
+          const existingList = lists.find((l) => l.id === updatedList.id)
+          
+          if (existingList &&
+              existingList.id === updatedList.id &&
+              existingList.title === updatedList.title &&
+              existingList.position === updatedList.position) {
+            return
+          }
+          
           useBoardStore.getState().updateList(updatedList)
         }
       )
@@ -64,6 +78,8 @@ export function useRealtimeSync(boardId: string) {
           console.log('[Realtime] LIST DELETE:', payload.old)
           const key = `list:delete:${payload.old.id}`
           if (usePendingOpsStore.getState().isPending(key)) return
+          if (usePendingOpsStore.getState().isRecent(`list:${payload.old.id}`)) return
+          
           useBoardStore.getState().deleteList(payload.old.id as string)
         }
       )
@@ -79,7 +95,15 @@ export function useRealtimeSync(boardId: string) {
           console.log('[Realtime] TASK INSERT:', payload.new)
           const key = `task:insert:${payload.new.id}`
           if (usePendingOpsStore.getState().isPending(key)) return
+          if (usePendingOpsStore.getState().isRecent(`task:${payload.new.id}`)) return
+          
           const newTask: Task = payload.new as Task
+          const lists = useBoardStore.getState().lists
+          const existingTask = lists
+            .flatMap((l) => l.tasks)
+            .find((t) => t.id === newTask.id)
+          if (existingTask) return
+          
           useBoardStore.getState().handleRealtimeTaskUpdate(newTask)
         }
       )
@@ -95,7 +119,23 @@ export function useRealtimeSync(boardId: string) {
           console.log('[Realtime] TASK UPDATE:', payload.new)
           const key = `task:update:${payload.new.id}`
           if (usePendingOpsStore.getState().isPending(key)) return
+          if (usePendingOpsStore.getState().isRecent(`task:${payload.new.id}`)) return
+          
           const updatedTask: Task = payload.new as Task
+          const lists = useBoardStore.getState().lists
+          const existingTask = lists
+            .flatMap((l) => l.tasks)
+            .find((t) => t.id === updatedTask.id)
+          
+          if (existingTask && 
+              existingTask.id === updatedTask.id &&
+              existingTask.title === updatedTask.title &&
+              existingTask.description === updatedTask.description &&
+              existingTask.position === updatedTask.position &&
+              existingTask.list_id === updatedTask.list_id) {
+            return
+          }
+          
           useBoardStore.getState().handleRealtimeTaskUpdate(updatedTask)
         }
       )
@@ -111,6 +151,8 @@ export function useRealtimeSync(boardId: string) {
           console.log('[Realtime] TASK DELETE:', payload.old)
           const key = `task:delete:${payload.old.id}`
           if (usePendingOpsStore.getState().isPending(key)) return
+          if (usePendingOpsStore.getState().isRecent(`task:${payload.old.id}`)) return
+          
           const lists = useBoardStore.getState().lists
           const listId = lists.find((l) => l.tasks.some((t) => t.id === payload.old.id))?.id
           if (listId) {

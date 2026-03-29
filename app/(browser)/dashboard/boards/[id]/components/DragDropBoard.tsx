@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useTransition, useCallback, useMemo } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -34,7 +34,6 @@ function DragDropBoardInner() {
   const moveTask = useBoardStore((s) => s.moveTask)
   const reorderTasksInList = useBoardStore((s) => s.reorderTasksInList)
   const { activeItem, setActiveItem, setHoveredListId, setDropIndex } = useDrag()
-  const { registerOp, clearOp } = usePendingOpsStore()
 
   const [, startTransition] = useTransition()
 
@@ -46,7 +45,12 @@ function DragDropBoardInner() {
     })
   )
 
-  const handleDragStart = (event: DragStartEvent) => {
+  const sortedLists = useMemo(
+    () => lists.slice().sort((a, b) => a.position - b.position),
+    [lists]
+  )
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event
     const activeData = active.data.current
 
@@ -55,9 +59,9 @@ function DragDropBoardInner() {
     } else if (activeData?.type === 'task') {
       setActiveItem({ type: 'task', id: active.id as string, listId: activeData.listId })
     }
-  }
+  }, [setActiveItem])
 
-  const handleDragOver = (event: DragOverEvent) => {
+  const handleDragOver = useCallback((event: DragOverEvent) => {
     const { over } = event
     
     if (over) {
@@ -77,9 +81,9 @@ function DragDropBoardInner() {
       setHoveredListId(null)
       setDropIndex(null)
     }
-  }
+  }, [setHoveredListId, setDropIndex, lists])
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event
     setActiveItem(null)
     setHoveredListId(null)
@@ -100,6 +104,9 @@ function DragDropBoardInner() {
           position: i,
         }))
 
+        // Mark as recent BEFORE updating local state
+        newLists.forEach((l) => usePendingOpsStore.getState().addRecent(`list:${l.id}`))
+        
         reorderLists(newLists)
 
         startTransition(async () => {
@@ -132,6 +139,7 @@ function DragDropBoardInner() {
             position: i,
           }))
 
+          newTasks.forEach((t) => usePendingOpsStore.getState().addRecent(`task:${t.id}`))
           reorderTasksInList(activeListId, newTasks)
 
           startTransition(async () => {
@@ -154,6 +162,7 @@ function DragDropBoardInner() {
           ? toList.tasks.findIndex((t) => t.id === overId)
           : toList.tasks.length
 
+        usePendingOpsStore.getState().addRecent(`task:${activeTaskId}`)
         moveTask(activeTaskId, activeListId, overListId, toIndex)
 
         startTransition(async () => {
@@ -165,7 +174,7 @@ function DragDropBoardInner() {
         })
       }
     }
-  }
+  }, [lists, setActiveItem, setHoveredListId, setDropIndex, reorderLists, reorderTasksInList, moveTask, startTransition])
 
   return (
     <DndContext
@@ -176,15 +185,12 @@ function DragDropBoardInner() {
       onDragEnd={handleDragEnd}
     >
       <SortableContext
-        items={lists.map((l) => l.id)}
+        items={sortedLists.map((l) => l.id)}
         strategy={horizontalListSortingStrategy}
       >
-        {lists
-          .slice()
-          .sort((a, b) => a.position - b.position)
-          .map((list) => (
-            <SortableListCard key={list.id} listId={list.id} />
-          ))}
+        {sortedLists.map((list) => (
+          <SortableListCard key={list.id} listId={list.id} />
+        ))}
       </SortableContext>
 
       <DragOverlay dropAnimation={null}>

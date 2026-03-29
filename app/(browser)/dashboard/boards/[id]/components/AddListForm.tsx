@@ -44,6 +44,7 @@ export function AddListForm() {
         const newList = await createList(board.id, title.trim(), position)
         deleteList(tempId)
         registerOp(`list:insert:${newList.id}`)
+        usePendingOpsStore.getState().addRecent(`list:${newList.id}`)
         addList(newList)
         clearOp(`list:insert:${newList.id}`)
       } catch (error) {

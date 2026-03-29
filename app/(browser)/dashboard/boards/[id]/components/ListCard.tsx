@@ -6,7 +6,7 @@ import { usePendingOpsStore } from '../store/usePendingOpsStore';
 import { updateListTitle, deleteList } from '../actions';
 import { toast } from 'sonner';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Edit01Icon, Delete02Icon } from '@hugeicons/core-free-icons';
+import { Edit01Icon, Delete02Icon, Menu01Icon } from '@hugeicons/core-free-icons';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,9 +15,10 @@ import { TaskList } from './TaskList';
 interface ListCardProps {
   listId: string;
   isActive?: boolean;
+  dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>;
 }
 
-export function ListCard({ listId, isActive }: ListCardProps) {
+export function ListCard({ listId, isActive, dragHandleProps }: ListCardProps) {
   const list = useBoardStore((s) => s.lists.find((l) => l.id === listId));
   const boardId = useBoardStore((s) => s.board?.id);
   const updateList = useBoardStore((s) => s.updateList);
@@ -48,6 +49,7 @@ export function ListCard({ listId, isActive }: ListCardProps) {
     setIsEditing(false);
 
     registerOp(`list:update:${listId}`);
+    usePendingOpsStore.getState().addRecent(`list:${listId}`);
 
     startTransition(async () => {
       try {
@@ -112,6 +114,17 @@ export function ListCard({ listId, isActive }: ListCardProps) {
           </h3>
         )}
         <div className="flex items-center gap-1">
+          {dragHandleProps && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="cursor-grab active:cursor-grabbing"
+              disabled={isPending}
+              {...dragHandleProps}
+            >
+              <HugeiconsIcon icon={Menu01Icon} />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon-sm"

@@ -45,6 +45,7 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
     onClose()
 
     registerOp(`task:update:${task.id}`)
+    usePendingOpsStore.getState().addRecent(`task:${task.id}`)
 
     startTransition(async () => {
       try {

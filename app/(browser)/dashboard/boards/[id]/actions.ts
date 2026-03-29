@@ -228,9 +228,19 @@ export async function deleteTask(taskId: string): Promise<void> {
 export async function reorderLists(listUpdates: { id: string; position: number }[]): Promise<void> {
   if (listUpdates.length === 0) return
 
-  await verifyBoardAccess(listUpdates[0].id)
-
   const supabase = await createClient()
+
+  const { data: list, error: listError } = await supabase
+    .from('lists')
+    .select('board_id')
+    .eq('id', listUpdates[0].id)
+    .single()
+
+  if (listError || !list) {
+    throw new Error('Board not found')
+  }
+
+  await verifyBoardAccess(list.board_id)
 
   await Promise.all(
     listUpdates.map((item) =>

@@ -33,8 +33,12 @@ export function SortableListCard({ listId }: SortableListCardProps) {
   }
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <ListCard listId={listId} isActive={isHovered} />
+    <div ref={setNodeRef} style={style}>
+      <ListCard 
+        listId={listId} 
+        isActive={isHovered}
+        dragHandleProps={{ ...attributes, ...listeners }}
+      />
     </div>
   )
 }
