@@ -135,3 +135,28 @@ export async function deleteBoard(boardId: string) {
 
   revalidatePath('/dashboard/boards');
 }
+
+export async function updateBoardVisibility(
+  boardId: string,
+  visibility: 'private' | 'public_readonly' | 'public_readwrite'
+) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error('Unauthorized');
+  }
+
+  const { error } = await supabase
+    .from('boards')
+    .update({ visibility })
+    .eq('id', boardId)
+    .eq('user_id', user.id);
+
+  if (error) {
+    throw new Error('Failed to update board visibility');
+  }
+}

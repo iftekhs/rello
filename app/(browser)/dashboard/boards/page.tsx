@@ -21,5 +21,8 @@ export default async function BoardsPage() {
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
+  // @ts-ignore - visibility field exists in DB
+  boards?.forEach((b) => { b.visibility ??= 'private'; });
+
   return <BoardClient initialBoards={boards || []} />;
 }

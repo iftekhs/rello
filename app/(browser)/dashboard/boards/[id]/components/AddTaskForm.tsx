@@ -6,7 +6,7 @@ import { createTask } from '../actions';
 import { toast } from 'sonner';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Add01Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
-import { Card } from '@/components/ui/card';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';

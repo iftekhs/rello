@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { useBoardStore, Task } from '../store/useBoardStore'
 import { updateTask as updateTaskAction } from '../actions'
 import { toast } from 'sonner'
@@ -29,13 +29,6 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
   const [isPending, startTransition] = useTransition()
   const updateTaskInStore = useBoardStore((s) => s.updateTask)
 
-  useEffect(() => {
-    if (isOpen) {
-      setTitle(task.title)
-      setDescription(task.description ?? '')
-    }
-  }, [isOpen, task.title, task.description])
-
   const handleSave = () => {
     if (!title.trim()) return
 
@@ -61,8 +54,14 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
     })
   }
 
+  const handleCancel = () => {
+    setTitle(task.title)
+    setDescription(task.description ?? '')
+    onClose()
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleCancel()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Task</DialogTitle>
@@ -86,7 +85,7 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isPending}>
+          <Button variant="outline" onClick={handleCancel} disabled={isPending}>
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={isPending || !title.trim()}>

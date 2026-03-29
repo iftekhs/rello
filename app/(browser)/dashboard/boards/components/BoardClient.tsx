@@ -31,20 +31,187 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Field, FieldLabel } from '@/components/ui/field';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { Add01Icon, MoreVerticalIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { createBoard, updateBoard, deleteBoard } from '../actions';
+import {
+  createBoard,
+  updateBoard,
+  deleteBoard,
+  updateBoardVisibility,
+} from '../actions';
 import Link from 'next/link';
+
+type BoardVisibility = 'private' | 'public_readonly' | 'public_readwrite';
 
 interface Board {
   id: string;
   title: string;
   created_at: string;
   user_id: string;
+  visibility: BoardVisibility;
 }
 
 interface BoardClientProps {
   initialBoards: Board[];
+}
+
+function BoardCard({
+  board,
+  onEdit,
+  onDelete,
+}: {
+  board: Board;
+  onEdit: (board: Board) => void;
+  onDelete: (board: Board) => void;
+}) {
+  const [visibilityMap, setVisibilityMap] = useState<
+    Record<string, BoardVisibility>
+  >(() => ({ [board.id]: board.visibility }));
+
+  const [isPending, startTransition] = useTransition();
+
+  const visibility = visibilityMap[board.id];
+  const isPublic = visibility !== 'private';
+  const isWritable = visibility === 'public_readwrite';
+
+  function handlePublicToggle(checked: boolean) {
+    const newVisibility: BoardVisibility = checked
+      ? 'public_readonly'
+      : 'private';
+
+    const previousVisibility = visibility;
+    setVisibilityMap((prev) => ({ ...prev, [board.id]: newVisibility }));
+
+    startTransition(async () => {
+      try {
+        await updateBoardVisibility(board.id, newVisibility);
+      } catch {
+        setVisibilityMap((prev) => ({
+          ...prev,
+          [board.id]: previousVisibility,
+        }));
+        toast.error('Failed to update visibility');
+      }
+    });
+  }
+
+  function handleWriteToggle(checked: boolean) {
+    if (!isPublic) return;
+
+    const newVisibility: BoardVisibility = checked
+      ? 'public_readwrite'
+      : 'public_readonly';
+
+    const previousVisibility = visibility;
+    setVisibilityMap((prev) => ({ ...prev, [board.id]: newVisibility }));
+
+    startTransition(async () => {
+      try {
+        await updateBoardVisibility(board.id, newVisibility);
+      } catch {
+        setVisibilityMap((prev) => ({
+          ...prev,
+          [board.id]: previousVisibility,
+        }));
+        toast.error('Failed to update visibility');
+      }
+    });
+  }
+
+  function formatDate(dateString: string) {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  }
+
+  return (
+    <Card className="relative cursor-pointer transition-colors hover:bg-muted/50">
+      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+        <div className="flex items-center gap-2">
+          <CardTitle className="text-base font-medium">{board.title}</CardTitle>
+          {visibility === 'public_readonly' && (
+            <Badge variant="secondary">Public</Badge>
+          )}
+          {visibility === 'public_readwrite' && (
+            <Badge variant="default">Public · Editable</Badge>
+          )}
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="absolute right-2 top-2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <HugeiconsIcon icon={MoreVerticalIcon} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(board);
+              }}
+            >
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(board);
+              }}
+            >
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </CardHeader>
+      <CardContent>
+        <p className="text-xs text-muted-foreground">
+          Created {formatDate(board.created_at)}
+        </p>
+      </CardContent>
+      <Separator />
+      <div
+        className={`p-4 space-y-3 ${isPending ? 'opacity-50' : ''}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium">Public</p>
+            <p className="text-xs text-muted-foreground">
+              Anyone can view this board
+            </p>
+          </div>
+          <Switch
+            checked={isPublic}
+            onCheckedChange={handlePublicToggle}
+            disabled={isPending}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium">Allow editing</p>
+            <p className="text-xs text-muted-foreground">
+              Public users can add and edit tasks
+            </p>
+          </div>
+          <Switch
+            checked={isWritable}
+            onCheckedChange={handleWriteToggle}
+            disabled={!isPublic || isPending}
+          />
+        </div>
+      </div>
+    </Card>
+  );
 }
 
 export function BoardClient({ initialBoards }: BoardClientProps) {
@@ -129,14 +296,6 @@ export function BoardClient({ initialBoards }: BoardClientProps) {
     setIsDeleteDialogOpen(true);
   }
 
-  function formatDate(dateString: string) {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  }
-
   return (
     <div
       className={`flex flex-1 flex-col gap-4 p-4 pt-0 ${isPending ? 'opacity-50 pointer-events-none' : ''}`}
@@ -203,40 +362,11 @@ export function BoardClient({ initialBoards }: BoardClientProps) {
         <div className="grid auto-rows-min gap-4 md:grid-cols-3 lg:grid-cols-4">
           {initialBoards.map((board) => (
             <Link key={board.id} href={`/dashboard/boards/${board.id}`}>
-              <Card className="relative cursor-pointer transition-colors hover:bg-muted/50">
-                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                  <CardTitle className="text-base font-medium">
-                    {board.title}
-                  </CardTitle>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        className="absolute right-2 top-2"
-                      >
-                        <HugeiconsIcon icon={MoreVerticalIcon} />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => openEditDialog(board)}>
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
-                        onClick={() => openDeleteDialog(board)}
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-xs text-muted-foreground">
-                    Created {formatDate(board.created_at)}
-                  </p>
-                </CardContent>
-              </Card>
+              <BoardCard
+                board={board}
+                onEdit={openEditDialog}
+                onDelete={openDeleteDialog}
+              />
             </Link>
           ))}
         </div>
