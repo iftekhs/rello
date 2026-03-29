@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { LoginForm } from '@/components/login-form';
+import { LoginForm } from './_components/login-form';
 import Link from 'next/link';
 
 export default function LoginPage() {

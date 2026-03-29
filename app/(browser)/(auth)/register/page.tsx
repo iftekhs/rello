@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { RegisterForm } from '@/components/register-form';
+import { RegisterForm } from './_components/register-form';
 import Link from 'next/link';
 
 export default function RegisterPage() {

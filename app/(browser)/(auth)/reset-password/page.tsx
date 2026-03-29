@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { ResetPasswordForm } from '@/components/reset-password-form';
+import { ResetPasswordForm } from './_components/reset-password-form';
 import Link from 'next/link';
 
 export default function ResetPasswordPage() {
