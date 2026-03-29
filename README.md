@@ -27,6 +27,7 @@ rello/
 │   │           └── actions.ts    # Server actions
 │   └── api/auth/                # Auth route handlers
 ├── components/ui/               # Shared shadcn/ui primitives only
+├── types/                        # Global TypeScript types (database, etc.)
 ├── store/                        # Global Zustand stores
 ├── lib/supabase/                 # Supabase client utilities
 └── hooks/                        # Shared hooks

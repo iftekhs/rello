@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getAuthenticatedUser } from '@/lib/supabase/get-user';
 import { BoardView } from './_components/BoardView';
-import { Board, List, Task } from '@/store/useBoardStore';
+import { Board, List, Task } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +18,7 @@ export default async function Page({ params }: PageProps) {
     .from('boards')
     .select('*')
     .eq('id', id)
-    .single();
+    .single() as { data: Board | null, error: unknown };
 
   if (boardError || !board) {
     redirect('/dashboard/boards');
@@ -36,7 +36,7 @@ export default async function Page({ params }: PageProps) {
     .from('lists')
     .select('*, tasks(*)')
     .eq('board_id', id)
-    .order('position', { ascending: true });
+    .order('position', { ascending: true }) as { data: List[] | null, error: unknown };
 
   if (listsError) {
     redirect('/dashboard/boards');
@@ -50,6 +50,6 @@ export default async function Page({ params }: PageProps) {
   })) as List[];
 
   return (
-    <BoardView initialBoard={board as Board} initialLists={processedLists} />
+    <BoardView initialBoard={board} initialLists={processedLists} />
   );
 }

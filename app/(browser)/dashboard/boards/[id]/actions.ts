@@ -2,7 +2,7 @@
 
 import { getAuthenticatedUser } from '@/lib/supabase/get-user'
 import { getAuthorizedBoard } from '@/lib/supabase/get-board'
-import { List, Task } from '@/store/useBoardStore'
+import { List, Task } from '@/types'
 
 async function verifyBoardAccess(boardId: string, requireOwner: boolean = false) {
   const { supabase, user } = await getAuthenticatedUser()

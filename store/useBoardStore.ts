@@ -1,33 +1,9 @@
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 import { devtools } from 'zustand/middleware'
+import { Board, List, Task } from '@/types'
 
-export type Board = {
-  id: string
-  title: string
-  user_id: string
-  created_at: string
-}
-
-export type Task = {
-  id: string
-  title: string
-  description: string | null
-  list_id: string
-  board_id: string
-  position: number
-  created_at: string
-  updated_at: string
-}
-
-export type List = {
-  id: string
-  title: string
-  board_id: string
-  position: number
-  created_at: string
-  tasks: Task[]
-}
+export type { Board, List, Task }
 
 type BoardState = {
   board: Board | null

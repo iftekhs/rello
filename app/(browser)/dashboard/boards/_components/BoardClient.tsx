@@ -43,16 +43,7 @@ import {
   updateBoardVisibility,
 } from '../actions';
 import Link from 'next/link';
-
-type BoardVisibility = 'private' | 'public_readonly' | 'public_readwrite';
-
-interface Board {
-  id: string;
-  title: string;
-  created_at: string;
-  user_id: string;
-  visibility: BoardVisibility;
-}
+import { Board, BoardVisibility } from '@/types';
 
 interface BoardClientProps {
   initialBoards: Board[];

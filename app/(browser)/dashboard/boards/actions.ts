@@ -2,8 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { getAuthenticatedUser } from '@/lib/supabase/get-user';
+import { Board, BoardVisibility } from '@/types';
 
-export async function createBoard(title: string) {
+export async function createBoard(title: string): Promise<Board> {
   const { supabase, user } = await getAuthenticatedUser();
 
   const { data: board, error: boardError } = await supabase
@@ -14,7 +15,7 @@ export async function createBoard(title: string) {
       visibility: 'public_readwrite',
     })
     .select()
-    .single();
+    .single() as { data: Board, error: unknown };
 
   if (boardError || !board) {
     throw new Error('Failed to create board');
@@ -42,7 +43,11 @@ export async function createBoard(title: string) {
   return board;
 }
 
-export async function updateBoard(boardId: string, title: string) {
+export async function createDefaultBoard(): Promise<Board> {
+  return createBoard('My Board');
+}
+
+export async function updateBoard(boardId: string, title: string): Promise<void> {
   const { supabase, user } = await getAuthenticatedUser();
 
   const { error } = await supabase
@@ -58,7 +63,7 @@ export async function updateBoard(boardId: string, title: string) {
   revalidatePath('/dashboard/boards');
 }
 
-export async function deleteBoard(boardId: string) {
+export async function deleteBoard(boardId: string): Promise<void> {
   const { supabase, user } = await getAuthenticatedUser();
 
   const { error } = await supabase
@@ -76,8 +81,8 @@ export async function deleteBoard(boardId: string) {
 
 export async function updateBoardVisibility(
   boardId: string,
-  visibility: 'private' | 'public_readonly' | 'public_readwrite',
-) {
+  visibility: BoardVisibility,
+): Promise<void> {
   const { supabase, user } = await getAuthenticatedUser();
 
   const { error } = await supabase

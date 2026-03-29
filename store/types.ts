@@ -1,30 +1,4 @@
-export type Board = {
-  id: string
-  title: string
-  user_id: string
-  created_at: string
-  visibility: 'private' | 'public_readonly' | 'public_readwrite'
-}
-
-export type Task = {
-  id: string
-  title: string
-  description: string | null
-  list_id: string
-  board_id: string
-  position: number
-  created_at: string
-  updated_at: string
-}
-
-export type List = {
-  id: string
-  title: string
-  board_id: string
-  position: number
-  created_at: string
-  tasks: Task[]
-}
+import { List, Task } from '@/types'
 
 export type RealtimePayload<T> = {
   eventType: 'INSERT' | 'UPDATE' | 'DELETE'

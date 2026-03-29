@@ -1,9 +1,10 @@
 import { SupabaseClient } from '@supabase/supabase-js';
+import { BoardVisibility } from '@/types';
 
 export interface Board {
   id: string;
   user_id: string;
-  visibility: 'private' | 'public_readonly' | 'public_readwrite';
+  visibility: BoardVisibility;
 }
 
 export async function getAuthorizedBoard(
