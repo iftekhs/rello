@@ -7,9 +7,10 @@ import { useDrag } from './DragContext'
 
 interface SortableListCardProps {
   listId: string
+  readOnly?: boolean
 }
 
-export function SortableListCard({ listId }: SortableListCardProps) {
+export function SortableListCard({ listId, readOnly }: SortableListCardProps) {
   const { hoveredListId, activeItem } = useDrag()
 
   const isHovered = hoveredListId === listId && activeItem?.type === 'task'
@@ -22,6 +23,7 @@ export function SortableListCard({ listId }: SortableListCardProps) {
     isDragging,
   } = useSortable({
     id: listId,
+    disabled: readOnly,
     data: {
       type: 'list',
     },
@@ -37,7 +39,8 @@ export function SortableListCard({ listId }: SortableListCardProps) {
       <ListCard 
         listId={listId} 
         isActive={isHovered}
-        dragHandleProps={{ ...attributes, ...listeners }}
+        readOnly={readOnly}
+        dragHandleProps={readOnly ? undefined : { ...attributes, ...listeners }}
       />
     </div>
   )

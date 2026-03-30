@@ -50,6 +50,6 @@ export default async function Page({ params }: PageProps) {
   })) as List[];
 
   return (
-    <BoardView initialBoard={board} initialLists={processedLists} />
+    <BoardView initialBoard={board} initialLists={processedLists} isOwner={isOwner} />
   );
 }

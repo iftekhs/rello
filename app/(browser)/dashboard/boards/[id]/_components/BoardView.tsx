@@ -1,28 +1,34 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useBoardStore } from '@/store/useBoardStore'
-import { Board, List } from '@/types'
+import { Board, List, BoardVisibility } from '@/types'
 import { useRealtimeSync } from '../_hooks/useRealtimeSync'
 import { DragDropBoard } from './DragDropBoard'
 import { AddListForm } from './AddListForm'
 import { RealtimeIndicator } from './RealtimeIndicator'
 import { Button } from '@/components/ui/button'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Share01Icon } from '@hugeicons/core-free-icons'
+import { Share01Icon, LockIcon } from '@hugeicons/core-free-icons'
 import { toast } from 'sonner'
 
 interface BoardViewProps {
   initialBoard: Board
   initialLists: List[]
+  isOwner: boolean
 }
 
-export function BoardView({ initialBoard, initialLists }: BoardViewProps) {
+export function BoardView({ initialBoard, initialLists, isOwner }: BoardViewProps) {
   const board = useBoardStore((s) => s.board)
   const setInitialData = useBoardStore((s) => s.setInitialData)
   const boardId = useBoardStore((s) => s.board?.id ?? '')
   const { status } = useRealtimeSync(boardId)
   const [copied, setCopied] = useState(false)
+
+  const isReadOnly = useMemo(
+    () => !isOwner && board?.visibility === 'public_readonly',
+    [board?.visibility, isOwner]
+  )
 
   useEffect(() => {
     setInitialData(initialBoard, initialLists)
@@ -48,6 +54,12 @@ export function BoardView({ initialBoard, initialLists }: BoardViewProps) {
       <header className="flex items-center justify-between px-4 py-3">
         <h1 className="text-xl font-bold">{board.title}</h1>
         <div className="flex items-center gap-2">
+          {isReadOnly && (
+            <span className="flex items-center gap-1 rounded bg-amber-100 px-2 py-1 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+              <HugeiconsIcon icon={LockIcon} className="h-3 w-3" />
+              Read-only
+            </span>
+          )}
           <Button variant="ghost" size="sm" onClick={handleShare}>
             <HugeiconsIcon icon={Share01Icon} className="mr-2" />
             {copied ? 'Copied!' : 'Share'}
@@ -56,8 +68,8 @@ export function BoardView({ initialBoard, initialLists }: BoardViewProps) {
         </div>
       </header>
       <div className="flex items-start flex-row gap-3 overflow-x-auto px-4 pb-4 pt-2">
-        <DragDropBoard />
-        <AddListForm />
+        <DragDropBoard readOnly={isReadOnly} />
+        {!isReadOnly && <AddListForm />}
       </div>
     </div>
   ) 

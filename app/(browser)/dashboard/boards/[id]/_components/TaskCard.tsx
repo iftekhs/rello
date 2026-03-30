@@ -14,9 +14,10 @@ import { TaskEditDialog } from './TaskEditDialog';
 interface TaskCardProps {
   taskId: string;
   listId: string;
+  readOnly?: boolean;
 }
 
-export function TaskCard({ taskId, listId }: TaskCardProps) {
+export function TaskCard({ taskId, listId, readOnly }: TaskCardProps) {
   const task = useBoardStore((s) =>
     s.lists.find((l) => l.id === listId)?.tasks.find((t) => t.id === taskId),
   );
@@ -62,8 +63,8 @@ export function TaskCard({ taskId, listId }: TaskCardProps) {
   return (
     <>
       <Card
-        className="group relative cursor-pointer p-2 hover:bg-muted/50"
-        onClick={() => setIsDialogOpen(true)}
+        className={`group relative cursor-pointer p-2 ${!readOnly ? 'hover:bg-muted/50' : ''}`}
+        onClick={readOnly ? undefined : () => setIsDialogOpen(true)}
       >
         <div className="flex items-start gap-2">
           <div className="flex-1 min-w-0">
@@ -74,24 +75,27 @@ export function TaskCard({ taskId, listId }: TaskCardProps) {
               </p>
             )}
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete();
-            }}
-            disabled={isPending}
-          >
-            <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4" />
-          </Button>
+          {!readOnly && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete();
+              }}
+              disabled={isPending}
+            >
+              <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </Card>
       <TaskEditDialog
         task={task}
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
+        readOnly={readOnly}
       />
     </>
   );

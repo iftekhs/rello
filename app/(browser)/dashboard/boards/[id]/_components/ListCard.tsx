@@ -15,10 +15,11 @@ import { TaskList } from './TaskList';
 interface ListCardProps {
   listId: string;
   isActive?: boolean;
+  readOnly?: boolean;
   dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>;
 }
 
-export function ListCard({ listId, isActive, dragHandleProps }: ListCardProps) {
+export function ListCard({ listId, isActive, readOnly, dragHandleProps }: ListCardProps) {
   const list = useBoardStore((s) => s.lists.find((l) => l.id === listId));
   const boardId = useBoardStore((s) => s.board?.id);
   const updateList = useBoardStore((s) => s.updateList);
@@ -112,8 +113,8 @@ export function ListCard({ listId, isActive, dragHandleProps }: ListCardProps) {
           />
         ) : (
           <h3
-            onClick={handleStartEdit}
-            className="flex-1 cursor-pointer truncate font-semibold"
+            onClick={readOnly ? undefined : handleStartEdit}
+            className={`flex-1 truncate font-semibold ${!readOnly ? 'cursor-pointer' : ''}`}
           >
             {list.title}
           </h3>
@@ -130,26 +131,30 @@ export function ListCard({ listId, isActive, dragHandleProps }: ListCardProps) {
               <HugeiconsIcon icon={Menu01Icon} />
             </Button>
           )}
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={handleStartEdit}
-            disabled={isPending}
-          >
-            <HugeiconsIcon icon={Edit01Icon} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={handleDelete}
-            disabled={isPending}
-          >
-            <HugeiconsIcon icon={Delete02Icon} />
-          </Button>
+          {!readOnly && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={handleStartEdit}
+                disabled={isPending}
+              >
+                <HugeiconsIcon icon={Edit01Icon} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={handleDelete}
+                disabled={isPending}
+              >
+                <HugeiconsIcon icon={Delete02Icon} />
+              </Button>
+            </>
+          )}
         </div>
       </div>
       <div className="flex-1 overflow-y-auto px-2">
-        {boardId && <TaskList listId={listId} boardId={boardId} />}
+        {boardId && <TaskList listId={listId} boardId={boardId} readOnly={readOnly} />}
       </div>
     </Card>
   );

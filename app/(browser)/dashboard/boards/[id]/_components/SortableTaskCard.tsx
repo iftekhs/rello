@@ -9,9 +9,10 @@ interface SortableTaskCardProps {
   taskId: string
   listId: string
   isBeingDragged?: boolean
+  readOnly?: boolean
 }
 
-export function SortableTaskCard({ taskId, listId, isBeingDragged = false }: SortableTaskCardProps) {
+export function SortableTaskCard({ taskId, listId, isBeingDragged = false, readOnly }: SortableTaskCardProps) {
   const {
     attributes,
     listeners,
@@ -19,6 +20,7 @@ export function SortableTaskCard({ taskId, listId, isBeingDragged = false }: Sor
     transform,
   } = useSortable({
     id: taskId,
+    disabled: readOnly,
     data: {
       type: 'task',
       listId,
@@ -38,8 +40,8 @@ export function SortableTaskCard({ taskId, listId, isBeingDragged = false }: Sor
   }
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <TaskCard taskId={taskId} listId={listId} />
+    <div ref={setNodeRef} style={style} {...(readOnly ? {} : attributes)} {...(readOnly ? {} : listeners)}>
+      <TaskCard taskId={taskId} listId={listId} readOnly={readOnly} />
     </div>
   )
 }

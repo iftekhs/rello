@@ -29,7 +29,11 @@ import { TaskDragOverlay } from './TaskDragOverlay'
 import { DragProvider, useDrag } from './DragContext'
 import { debounce } from '@/lib/utils'
 
-function DragDropBoardInner() {
+interface DragDropBoardInnerProps {
+  readOnly?: boolean
+}
+
+function DragDropBoardInner({ readOnly }: DragDropBoardInnerProps) {
   const lists = useBoardStore((s) => s.lists)
   const reorderLists = useBoardStore((s) => s.reorderLists)
   const moveTask = useBoardStore((s) => s.moveTask)
@@ -43,6 +47,7 @@ function DragDropBoardInner() {
       activationConstraint: {
         distance: 8,
       },
+      disabled: readOnly,
     })
   )
 
@@ -221,7 +226,7 @@ function DragDropBoardInner() {
         strategy={horizontalListSortingStrategy}
       >
         {sortedLists.map((list) => (
-          <SortableListCard key={list.id} listId={list.id} />
+          <SortableListCard key={list.id} listId={list.id} readOnly={readOnly} />
         ))}
       </SortableContext>
 
@@ -235,10 +240,14 @@ function DragDropBoardInner() {
   )
 }
 
-export function DragDropBoard() {
+interface DragDropBoardProps {
+  readOnly?: boolean
+}
+
+export function DragDropBoard({ readOnly }: DragDropBoardProps) {
   return (
     <DragProvider>
-      <DragDropBoardInner />
+      <DragDropBoardInner readOnly={readOnly} />
     </DragProvider>
   )
 }

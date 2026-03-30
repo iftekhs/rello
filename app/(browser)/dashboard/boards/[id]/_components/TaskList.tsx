@@ -15,9 +15,10 @@ import { Card } from '@/components/ui/card';
 interface TaskListProps {
   listId: string;
   boardId: string;
+  readOnly?: boolean;
 }
 
-export function TaskList({ listId, boardId }: TaskListProps) {
+export function TaskList({ listId, boardId, readOnly }: TaskListProps) {
   const list = useBoardStore((s) => s.lists.find((l) => l.id === listId));
   const tasks = useMemo(() => list?.tasks ?? [], [list]);
 
@@ -59,6 +60,7 @@ export function TaskList({ listId, boardId }: TaskListProps) {
                   taskId={task.id}
                   listId={listId}
                   isBeingDragged={isBeingDragged}
+                  readOnly={readOnly}
                 />
               </div>
             );
@@ -69,7 +71,8 @@ export function TaskList({ listId, boardId }: TaskListProps) {
             )}
         </SortableContext>
       </div>
-      <AddTaskForm listId={listId} boardId={boardId} />
+
+      {!readOnly && <AddTaskForm listId={listId} boardId={boardId} />}
     </>
   );
 }

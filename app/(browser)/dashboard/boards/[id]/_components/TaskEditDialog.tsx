@@ -22,9 +22,10 @@ interface TaskEditDialogProps {
   task: Task
   isOpen: boolean
   onClose: () => void
+  readOnly?: boolean
 }
 
-export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
+export function TaskEditDialog({ task, isOpen, onClose, readOnly }: TaskEditDialogProps) {
   const [title, setTitle] = useState(task.title)
   const [description, setDescription] = useState(task.description ?? '')
   const [isPending, startTransition] = useTransition()
@@ -73,7 +74,7 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleCancel()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Task</DialogTitle>
+          <DialogTitle>{readOnly ? 'View Task' : 'Edit Task'}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
@@ -82,6 +83,7 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter a title..."
               required
+              disabled={readOnly}
             />
           </div>
           <div className="grid gap-2">
@@ -90,20 +92,23 @@ export function TaskEditDialog({ task, isOpen, onClose }: TaskEditDialogProps) {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add a description (optional)"
               rows={4}
+              disabled={readOnly}
             />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={handleCancel} disabled={isPending}>
-            Cancel
+            {readOnly ? 'Close' : 'Cancel'}
           </Button>
-          <Button onClick={handleSave} disabled={isPending || !title.trim()}>
-            {isPending ? (
-              <HugeiconsIcon icon={Loading04Icon} className="h-4 w-4 animate-spin" />
-            ) : (
-              'Save'
-            )}
-          </Button>
+          {!readOnly && (
+            <Button onClick={handleSave} disabled={isPending || !title.trim()}>
+              {isPending ? (
+                <HugeiconsIcon icon={Loading04Icon} className="h-4 w-4 animate-spin" />
+              ) : (
+                'Save'
+              )}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
