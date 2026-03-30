@@ -41,6 +41,9 @@ export function useRealtimeSync(boardId: string) {
             return
           }
           
+          const existingList = useBoardStore.getState().lists.find(l => l.id === payload.new.id)
+          if (existingList) return
+          
           const newList: List = { ...payload.new as List, tasks: [] }
           useBoardStore.getState().addList(newList)
         }
