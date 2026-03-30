@@ -6,7 +6,7 @@
 [![Zustand](https://img.shields.io/badge/Zustand-5-yellow)](https://zustand-demo.pmnd.rs/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38BDF8)](https://tailwindcss.com)
 
-[Live Demo]()
+[Live Demo](https://rello.vercel.app)
 
 ## 1. Project Overview
 
