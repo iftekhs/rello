@@ -60,7 +60,7 @@ export default function Page() {
             </Button>
           </Link>
           <div className="text-sm text-muted-foreground md:text-balance">
-            Built with - Nextjs | TypeScript | Redux Toolkit | Supabase |
+            Built with - Nextjs | TypeScript | Zustand | Supabase |
             Dnd-Kit
           </div>
         </div>
