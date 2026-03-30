@@ -144,7 +144,7 @@ export async function updateTask(
 }
 
 export async function deleteTask(taskId: string): Promise<void> {
-  const { supabase } = await verifyTaskOwnership(taskId, true)
+  const { supabase } = await verifyTaskOwnership(taskId)
 
   const { error } = await supabase
     .from('tasks')
@@ -205,10 +205,8 @@ export async function moveTaskToList(
   taskId: string,
   newListId: string,
   newPosition: number,
-  siblingUpdates: { id: string; position: number }[],
-  fromListId: string
 ): Promise<void> {
-  const { supabase } = await verifyTaskOwnership(taskId, true)
+  const { supabase } = await verifyTaskOwnership(taskId)
 
   const { data: taskData, error: taskError } = await supabase
     .from('tasks')

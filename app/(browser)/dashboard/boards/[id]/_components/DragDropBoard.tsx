@@ -196,7 +196,7 @@ function DragDropBoardInner() {
 
         startTransition(async () => {
           try {
-            await moveTaskToList(activeTaskId, overListId, toIndex, [], activeListId)
+            await moveTaskToList(activeTaskId, overListId, toIndex)
             registerEchoSequence(`task:${activeTaskId}`, seq)
             clearOp(`task:update:${activeTaskId}`)
           } catch (error) {
