@@ -1,12 +1,16 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useBoardStore } from '@/store/useBoardStore'
 import { Board, List } from '@/types'
 import { useRealtimeSync } from '../_hooks/useRealtimeSync'
 import { DragDropBoard } from './DragDropBoard'
 import { AddListForm } from './AddListForm'
 import { RealtimeIndicator } from './RealtimeIndicator'
+import { Button } from '@/components/ui/button'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Share01Icon } from '@hugeicons/core-free-icons'
+import { toast } from 'sonner'
 
 interface BoardViewProps {
   initialBoard: Board
@@ -18,10 +22,18 @@ export function BoardView({ initialBoard, initialLists }: BoardViewProps) {
   const setInitialData = useBoardStore((s) => s.setInitialData)
   const boardId = useBoardStore((s) => s.board?.id ?? '')
   const { status } = useRealtimeSync(boardId)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     setInitialData(initialBoard, initialLists)
   }, [initialBoard, initialLists, setInitialData])
+
+  const handleShare = async () => {
+    await navigator.clipboard.writeText(window.location.href)
+    setCopied(true)
+    toast.success('Link copied to clipboard')
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   if (!board) {
     return (
@@ -35,12 +47,18 @@ export function BoardView({ initialBoard, initialLists }: BoardViewProps) {
     <div className="flex h-full min-h-screen flex-col">
       <header className="flex items-center justify-between px-4 py-3">
         <h1 className="text-xl font-bold">{board.title}</h1>
-        <RealtimeIndicator status={status} />
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={handleShare}>
+            <HugeiconsIcon icon={Share01Icon} className="mr-2" />
+            {copied ? 'Copied!' : 'Share'}
+          </Button>
+          <RealtimeIndicator status={status} />
+        </div>
       </header>
       <div className="flex items-start flex-row gap-3 overflow-x-auto px-4 pb-4 pt-2">
         <DragDropBoard />
         <AddListForm />
       </div>
     </div>
-  )
+  ) 
 }
